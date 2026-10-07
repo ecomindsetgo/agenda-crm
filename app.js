@@ -171,9 +171,30 @@ if (app) {
                 }
                 // Si no es temporal, onAuthStateChanged se encarga de mostrar la app
             } catch (error) {
-                errorDiv.innerText = "Credenciales incorrectas o correo no autorizado.";
+                console.error('[LOGIN Firebase]', error?.code, error?.message, error);
+
+                const loginMessages = {
+                    'auth/invalid-credential': 'El correo o la contraseña no coinciden con una cuenta registrada.',
+                    'auth/wrong-password': 'La contraseña ingresada es incorrecta.',
+                    'auth/user-not-found': 'No existe una cuenta registrada con ese correo.',
+                    'auth/invalid-email': 'El formato del correo electrónico no es válido.',
+                    'auth/user-disabled': 'Esta cuenta se encuentra deshabilitada en Firebase Authentication.',
+                    'auth/too-many-requests': 'Se bloquearon temporalmente los intentos por seguridad. Espera unos minutos e inténtalo nuevamente.',
+                    'auth/network-request-failed': 'No se pudo conectar con Firebase. Revisa tu conexión a Internet y vuelve a intentarlo.',
+                    'auth/operation-not-allowed': 'El acceso con correo y contraseña no está habilitado en Firebase Authentication.',
+                    'auth/unauthorized-domain': 'El dominio desde el que abriste el sistema no está autorizado en Firebase Authentication.'
+                };
+
+                let message = loginMessages[error?.code] || 'No se pudo iniciar sesión. Firebase devolvió: ' + (error?.code || error?.message || 'error desconocido');
+
+                // Abrir index.html directamente con file:// puede ocasionar problemas de
+                // autenticación/App Check en algunos navegadores. Lo informamos claramente.
+                if (window.location.protocol === 'file:') {
+                    message += ' Estás abriendo el sistema como archivo local. Prueba desde tu dominio web o desde un servidor local (http://localhost).';
+                }
+
+                errorDiv.innerText = message;
                 errorDiv.classList.remove('hidden');
-                // Limpiamos solo la contraseña, no el email (mejor UX)
                 document.getElementById('auth-password').value = '';
             }
         };
