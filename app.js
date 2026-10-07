@@ -1827,10 +1827,7 @@ window.printClinicalHistory = function() {
                         <div class="v31-appointment-footer">
                             <label><span>Estado</span>
                                 <select onchange="updateAppointmentStatus('${a.id}', this.value, this)" class="${statusSelectCls}">
-                                    <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Agendada</option>
-                                    <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
-                                    <option value="arrived" ${a.status === 'arrived' ? 'selected' : ''}>Llegó</option>
-                                    <option value="in_session" ${a.status === 'in_session' ? 'selected' : ''}>En sesión</option>
+                                    <option value="pendiente" ${['pendiente','confirmada','arrived','in_session'].includes(a.status) ? 'selected' : ''}>Pendiente</option>
                                     <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
                                     <option value="no_asistio" ${a.status === 'no_asistio' ? 'selected' : ''}>No asistió</option>
                                     <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
@@ -1951,7 +1948,7 @@ window.printClinicalHistory = function() {
                     const modalityIcon = a.modality === 'virtual' ? '💻' : '🏢';
                     return `<div class="flex items-center justify-between py-1.5 border-b border-graphite-50 last:border-0">
                         <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-xs font-bold text-graphite-600 bg-graphite-100 px-2 py-0.5 rounded-lg">⏰ ${a.time}</span>
+                            <span class="text-xs font-bold text-graphite-600 bg-graphite-100 px-2 py-0.5 rounded-lg">${a.time}</span>
                             <span class="text-sm font-semibold text-graphite-700">${modalityIcon} ${a.patientName}</span>
                             <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${(a.status || 'programada').toUpperCase()}</span>
                         </div>
@@ -3112,8 +3109,8 @@ window.printClinicalHistory = function() {
 
             const ageStr = p.age ? String(p.age) + ' años' : 'No especificada';
 
-            document.getElementById('hist-modal-title').innerText = '📋 Historial — ' + p.name;
-            document.getElementById('hist-modal-subtitle').innerText = '📞 ' + p.phone + (p.birth ? '  •  🎂 ' + p.birth : '') + (p.age ? '  •  Edad: ' + p.age : '');
+            document.getElementById('hist-modal-title').innerText = 'Historial — ' + p.name;
+            document.getElementById('hist-modal-subtitle').innerText = p.phone + (p.birth ? '  •  ' + p.birth : '') + (p.age ? '  •  Edad: ' + p.age : '');
 
             document.getElementById('hist-patient-info').innerHTML = `
                 <div><span class="font-bold text-graphite-500 text-xs uppercase block mb-0.5">Nombre</span><span class="font-semibold">${p.name}</span></div>
@@ -3149,15 +3146,15 @@ window.printClinicalHistory = function() {
                         ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
                         : 'text-amber-600 bg-amber-50 border-amber-200';
                     const modalityBadge = a.modality === 'virtual'
-                        ? '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-sky-50 text-sky-700 border-sky-200">💻 Virtual</span>'
-                        : '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-graphite-100 text-graphite-600 border-graphite-200">🏢 Presencial</span>';
+                        ? '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-sky-50 text-sky-700 border-sky-200">Virtual</span>'
+                        : '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-graphite-100 text-graphite-600 border-graphite-200">Presencial</span>';
                     return `<div class="bg-graphite-50 border border-graphite-200 rounded-xl p-3 space-y-1">
                         <div class="flex flex-wrap gap-2 items-center">
-                            <span class="text-xs font-bold text-graphite-700">📅 ${a.date}</span>
-                            <span class="text-xs font-semibold text-graphite-600 bg-graphite-200 px-2 py-0.5 rounded-lg">⏰ ${a.time}</span>
+                            <span class="text-xs font-bold text-graphite-700">${a.date}</span>
+                            <span class="text-xs font-semibold text-graphite-600 bg-graphite-200 px-2 py-0.5 rounded-lg">${a.time}</span>
                             <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${a.status.toUpperCase()}</span>
                             ${modalityBadge}
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${payBadge}">${a.paymentStatus === 'pagado' ? '💳 Pagado' : '⏳ Pendiente'} — ${formatApptCostLabel(a)}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${payBadge}">${a.paymentStatus === 'pagado' ? 'Pagado' : 'Pendiente'} — ${formatApptCostLabel(a)}</span>
                         </div>
                         ${a.notes ? `<p class="text-xs text-graphite-500 italic">"${a.notes}"</p>` : ''}
                     </div>`;
