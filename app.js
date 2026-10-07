@@ -488,6 +488,22 @@ id:doc.id,
                 await deleteDoc(doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid));
             }
         };
+
+        // V2: actualización CRM compatible con la colección actual de pacientes.
+        // Solo añade/actualiza campos; nunca mueve ni elimina la ficha existente.
+        window.updatePatientCRMStatus = async function(pid, newStatus) {
+            if (!state.currentUser) throw new Error('Sesión no disponible');
+            const allowed = ['nuevo','contactado','interesado','cita_agendada','atendido','no_asistio','cancelo','recurrente','seguimiento','pausado','alta','inactivo'];
+            if (!allowed.includes(newStatus)) throw new Error('Estado CRM no válido');
+            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
+            await updateDoc(ref, { leadStatus: newStatus, crmUpdatedAt: new Date().toISOString() });
+        };
+
+        window.markPatientFollowUp = async function(pid) {
+            if (!state.currentUser) throw new Error('Sesión no disponible');
+            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
+            await updateDoc(ref, { leadStatus: 'seguimiento', followUpAt: new Date().toISOString(), crmUpdatedAt: new Date().toISOString() });
+        };
 window.openClinicalHistory = function(patientId){
     try {
         const patients = Array.isArray(state.patients) ? state.patients : [];
@@ -1550,7 +1566,7 @@ window.printClinicalHistory = function() {
             if (oldStatus === newStatus) return;
             try {
                 const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-                await updateDoc(ref, { status: newStatus });
+                await updateDoc(ref, { status: newStatus, statusUpdatedAt: new Date().toISOString() });
                 await syncPackageOnStatusChange(a, oldStatus, newStatus);
             } catch (err) {
                 console.error('Error al actualizar estado:', err);
@@ -1567,7 +1583,7 @@ window.printClinicalHistory = function() {
             const newPaymentStatus = a.paymentStatus === 'pagado' ? 'pendiente' : 'pagado';
             try {
                 const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-                await updateDoc(ref, { paymentStatus: newPaymentStatus });
+                await updateDoc(ref, { paymentStatus: newPaymentStatus, paymentUpdatedAt: new Date().toISOString() });
             } catch (err) {
                 console.error('Error al actualizar estado de pago:', err);
                 alert('⚠️ No se pudo actualizar el estado de pago.');
@@ -1666,22 +1682,32 @@ window.printClinicalHistory = function() {
                 return;
             }
             container.innerHTML = filtered.map(a => {
-                const badge = a.status === 'completada'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                    : a.status === 'cancelada'
-                    ? 'bg-red-50 text-red-600 border-red-200'
-                    : 'bg-amber-50 text-amber-700 border-amber-200';
+                const statusClassMap = {
+                    completada:'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    cancelada:'bg-red-50 text-red-600 border-red-200',
+                    no_asistio:'bg-orange-50 text-orange-700 border-orange-200',
+                    confirmada:'bg-sky-50 text-sky-700 border-sky-200',
+                    arrived:'bg-cyan-50 text-cyan-700 border-cyan-200',
+                    in_session:'bg-violet-50 text-violet-700 border-violet-200',
+                    pendiente:'bg-amber-50 text-amber-700 border-amber-200'
+                };
+                const badge = statusClassMap[a.status] || statusClassMap.pendiente;
+                const statusTextMap = { pendiente:'AGENDADA', confirmada:'CONFIRMADA', arrived:'LLEGÓ', in_session:'EN SESIÓN', completada:'COMPLETADA', no_asistio:'NO ASISTIÓ', cancelada:'CANCELADA' };
                 const payBadgeCls = a.paymentStatus === 'pagado'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : 'bg-amber-50 text-amber-700 border-amber-200';
                 const payBadgeLbl = a.paymentStatus === 'pagado' ? '💳 Pagado' : '⏳ Pendiente';
                 // Mismo patrón de color que el botón de estado de pago:
                 // completada = verde, pendiente = ámbar, cancelada = rojo.
-                const statusSelectCls = a.status === 'completada'
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                    : a.status === 'cancelada'
-                    ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-                    : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
+                const statusSelectCls = {
+                    completada:'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100',
+                    cancelada:'bg-red-50 text-red-600 border-red-200 hover:bg-red-100',
+                    no_asistio:'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100',
+                    confirmada:'bg-sky-50 text-sky-700 border-sky-200 hover:bg-sky-100',
+                    arrived:'bg-cyan-50 text-cyan-700 border-cyan-200 hover:bg-cyan-100',
+                    in_session:'bg-violet-50 text-violet-700 border-violet-200 hover:bg-violet-100',
+                    pendiente:'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                }[a.status] || 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
                 const modalityBadge = a.modality === 'virtual'
                     ? '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-sky-50 text-sky-700 border-sky-200">💻 Virtual</span>'
                     : '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-graphite-50 text-graphite-600 border-graphite-200">🏢 Presencial</span>';
@@ -1691,7 +1717,7 @@ window.printClinicalHistory = function() {
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="text-sm font-bold text-graphite-700 bg-graphite-100 px-2 py-0.5 rounded-lg">⏰ ${a.time}</span>
                             <h4 class="font-extrabold text-graphite-800 text-base">${a.patientName}</h4>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${(a.status || 'programada').toUpperCase()}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${statusTextMap[a.status] || String(a.status || 'AGENDADA').toUpperCase()}</span>
                             ${modalityBadge}
                         </div>
                         <p class="text-xs text-graphite-500 italic">"${a.notes || 'Sin observaciones para esta sesión'}"</p>
@@ -1699,9 +1725,13 @@ window.printClinicalHistory = function() {
                     <div class="flex items-center gap-2 flex-wrap self-end sm:self-center">
                         <button onclick="enviarRecordatorioWhatsapp('${a.id}')" title="Enviar recordatorio por WhatsApp" class="bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 text-xs px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1">📲 WhatsApp</button>
                         <select onchange="updateAppointmentStatus('${a.id}', this.value, this)" title="Cambiar estado de la cita" class="border text-xs px-2 py-1.5 rounded-xl font-semibold cursor-pointer transition ${statusSelectCls}">
-                            <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Pendiente</option>
-                            <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completado</option>
-                            <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelado</option>
+                            <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Agendada</option>
+                            <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
+                            <option value="arrived" ${a.status === 'arrived' ? 'selected' : ''}>Llegó</option>
+                            <option value="in_session" ${a.status === 'in_session' ? 'selected' : ''}>En sesión</option>
+                            <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
+                            <option value="no_asistio" ${a.status === 'no_asistio' ? 'selected' : ''}>No asistió</option>
+                            <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
                         </select>
                         <button onclick="quickTogglePayment('${a.id}')" title="Cambiar estado de pago" class="text-xs px-3 py-1.5 rounded-xl font-semibold border ${payBadgeCls}">${payBadgeLbl}</button>
                         <button onclick="editAppointment('${a.id}')" class="text-sage-600 hover:text-sage-800 text-xs font-bold">✏️</button>

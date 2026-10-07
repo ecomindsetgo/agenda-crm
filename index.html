@@ -14,6 +14,28 @@
 </style>
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col pb-20 md:pb-6">
+<svg aria-hidden="true" class="v2-svg-sprite" width="0" height="0" style="position:absolute;overflow:hidden">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="i-reception" viewBox="0 0 24 24"><path d="M4 20v-8a8 8 0 0 1 16 0v8"/><path d="M2 20h20M8 12h8M12 4v3"/></symbol>
+  <symbol id="i-clinical" viewBox="0 0 24 24"><path d="M9 3h6v4H9z"/><rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 12h6M12 9v6"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 7h15a3 3 0 0 1 3 3v8H5a2 2 0 0 1-2-2z"/><path d="M3 7V6a2 2 0 0 1 2-2h13v3M16 12h5"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5M9 13h6M9 17h6M9 9h2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-money" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M7 9h.01M17 15h.01"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+</svg>
+
 
     <!-- ================= PANTALLA DE AUTENTICACIÓN ================= -->
     <div id="auth-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-50 p-4">
@@ -202,15 +224,15 @@
                 <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
                     <span id="current-date-lbl" class="text-sm bg-indigo-950/40 px-3.5 py-1.5 rounded-lg border border-indigo-800 font-medium"></span>
                     <button onclick="openPrintModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-lg shadow-sm transition flex items-center gap-2 text-sm" title="Imprimir Reporte">
-                        <span>🖨️</span><span class="hidden md:inline">Imprimir</span>
+                        <svg class="v2-icon"><use href="#i-report"></use></svg><span class="hidden md:inline">Reportes</span>
                     </button>
                     <button onclick="openAssistantModal()" class="bg-violet-600 hover:bg-violet-500 border border-violet-400/40 px-3 py-1.5 rounded-lg transition flex items-center gap-2 text-sm font-semibold" title="Asistente virtual IA">
-                        <span>🤖</span><span class="hidden md:inline">Asistente IA</span>
+                        <svg class="v2-icon"><use href="#i-spark"></use></svg><span class="hidden md:inline">Asistente IA</span>
                     </button>
                     <button onclick="openProfileModal()" class="bg-indigo-700 hover:bg-indigo-600 border border-indigo-500/50 p-2 rounded-lg transition flex items-center gap-2 text-sm font-medium" title="Mi Perfil">
-                        <span>👤</span><span id="header-user-name" class="hidden md:inline max-w-[120px] truncate text-xs"></span>
+                        <svg class="v2-icon"><use href="#i-users"></use></svg><span id="header-user-name" class="hidden md:inline max-w-[120px] truncate text-xs"></span>
                     </button>
-                    <button id="logout-btn" class="bg-red-950/50 hover:bg-red-900 border border-red-800/60 p-2 rounded-lg transition" title="Cerrar Sesión">🚪</button>
+                    <button id="logout-btn" class="bg-red-950/50 hover:bg-red-900 border border-red-800/60 p-2 rounded-lg transition" title="Cerrar Sesión"><svg class="v2-icon"><use href="#i-arrow"></use></svg></button>
                 </div>
             </div>
         </header>
@@ -219,15 +241,19 @@
         <nav class="v2-sidebar bg-white border-b border-slate-200 sticky z-30 no-print shadow-sm">
             <div class="max-w-5xl mx-auto px-4 flex justify-around sm:justify-start sm:gap-3">
                 <div class="v2-sidebar-label">Principal</div>
-                <button data-v2-nav="inicio" onclick="switchTab('inicio')" class="v2-nav-active py-3 px-3 text-sm flex items-center gap-2"><span>⌂</span><span>Inicio</span></button>
-                <button id="tab-citas" data-v2-nav="citas" onclick="switchTab('citas')" class="py-3 px-3 text-sm flex items-center gap-2"><span>🗓</span><span>Agenda</span></button>
+                <button data-v2-nav="inicio" onclick="switchTab('inicio')" class="v2-nav-active py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-home"></use></svg><span>Inicio</span></button>
+                <button id="tab-citas" data-v2-nav="citas" onclick="switchTab('citas')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Agenda</span></button>
+                <button data-v2-nav="recepcion" onclick="switchTab('recepcion')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-reception"></use></svg><span>Recepción</span></button>
                 <div class="v2-sidebar-label">Pacientes</div>
-                <button id="tab-pacientes" data-v2-nav="pacientes" onclick="switchTab('pacientes')" class="py-3 px-3 text-sm flex items-center gap-2"><span>👥</span><span>Pacientes / CRM</span></button>
+                <button id="tab-pacientes" data-v2-nav="pacientes" onclick="switchTab('pacientes')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-users"></use></svg><span>Pacientes / CRM</span></button>
+                <button data-v2-nav="clinica" onclick="switchTab('clinica')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-clinical"></use></svg><span>Gestión clínica</span></button>
                 <div class="v2-sidebar-label">Administración</div>
-                <button id="tab-finanzas" data-v2-nav="finanzas" onclick="switchTab('finanzas')" class="py-3 px-3 text-sm flex items-center gap-2"><span>▤</span><span>Finanzas</span></button>
-                <button onclick="openPrintModal()" class="py-3 px-3 text-sm flex items-center gap-2"><span>🖨</span><span>Reportes</span></button>
+                <button id="tab-finanzas" data-v2-nav="finanzas" onclick="switchTab('finanzas')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-wallet"></use></svg><span>Finanzas</span></button>
+                <button data-v2-nav="caja" onclick="switchTab('caja')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-money"></use></svg><span>Caja diaria</span></button>
+                <button data-v2-nav="alertas" onclick="switchTab('alertas')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-bell"></use></svg><span>Alertas</span></button>
+                <button onclick="openPrintModal()" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-report"></use></svg><span>Reportes</span></button>
                 <div class="v2-sidebar-label">Inteligencia</div>
-                <button onclick="openAssistantModal()" class="py-3 px-3 text-sm flex items-center gap-2"><span>✦</span><span>Asistente IA</span></button>
+                <button onclick="openAssistantModal()" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-spark"></use></svg><span>Asistente IA</span></button>
             </div>
         </nav>
 
@@ -243,23 +269,23 @@
                             <p id="v2-full-date" class="text-sm text-slate-500 mt-1 capitalize"></p>
                         </div>
                         <div class="grid grid-cols-2 sm:flex gap-2">
-                            <button onclick="openAppointmentModal()" class="v2-quick-btn">＋ Nueva cita</button>
-                            <button onclick="openPatientModal()" class="v2-quick-btn">＋ Nuevo paciente</button>
-                            <button onclick="openAssistantModal()" class="v2-quick-btn">✦ Consultar IA</button>
-                            <button onclick="exportAgendaBackup()" class="v2-quick-btn">⇩ Respaldo</button>
+                            <button onclick="openAppointmentModal()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-plus"></use></svg> Nueva cita</button>
+                            <button onclick="openPatientModal()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-plus"></use></svg> Nuevo paciente</button>
+                            <button onclick="openAssistantModal()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-spark"></use></svg> Consultar IA</button>
+                            <button onclick="exportAgendaBackup()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-download"></use></svg> Respaldo</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3">
-                    <div class="v2-kpi"><span class="v2-kpi-icon">🗓</span><div><div id="v2-kpi-today" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Citas hoy</div></div></div>
-                    <div class="v2-kpi"><span class="v2-kpi-icon">✓</span><div><div id="v2-kpi-completed" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Completadas</div></div></div>
-                    <div class="v2-kpi"><span class="v2-kpi-icon">⏳</span><div><div id="v2-kpi-pending" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Por atender</div></div></div>
-                    <div class="v2-kpi"><span class="v2-kpi-icon">×</span><div><div id="v2-kpi-cancelled" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Canceladas</div></div></div>
-                    <div class="v2-kpi"><span class="v2-kpi-icon">S/</span><div><div id="v2-kpi-collected" class="text-xl font-black text-[#2e3733]">S/ 0.00</div><div class="v2-kpi-label mt-2">Cobrado hoy</div></div></div>
-                    <div class="v2-kpi"><span class="v2-kpi-icon">⌁</span><div><div id="v2-kpi-receivable" class="text-xl font-black text-[#2e3733]">S/ 0.00</div><div class="v2-kpi-label mt-2">Por cobrar</div></div></div>
-                    <div class="v2-kpi"><span class="v2-kpi-icon">👥</span><div><div id="v2-kpi-patients" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Pacientes</div></div></div>
-                    <div class="v2-kpi"><span class="v2-kpi-icon">＋</span><div><div id="v2-kpi-new" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Nuevos mes</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-calendar"></use></svg></span><div><div id="v2-kpi-today" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Citas hoy</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-check"></use></svg></span><div><div id="v2-kpi-completed" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Completadas</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-clock"></use></svg></span><div><div id="v2-kpi-pending" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Por atender</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-x"></use></svg></span><div><div id="v2-kpi-cancelled" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Canceladas</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-money"></use></svg></span><div><div id="v2-kpi-collected" class="text-xl font-black text-[#2e3733]">S/ 0.00</div><div class="v2-kpi-label mt-2">Cobrado hoy</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-wallet"></use></svg></span><div><div id="v2-kpi-receivable" class="text-xl font-black text-[#2e3733]">S/ 0.00</div><div class="v2-kpi-label mt-2">Por cobrar</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-users"></use></svg></span><div><div id="v2-kpi-patients" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Pacientes</div></div></div>
+                    <div class="v2-kpi"><span class="v2-kpi-icon"><svg class="v2-icon"><use href="#i-plus"></use></svg></span><div><div id="v2-kpi-new" class="v2-kpi-value">0</div><div class="v2-kpi-label mt-2">Nuevos mes</div></div></div>
                 </div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-5">
@@ -278,15 +304,44 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <button onclick="switchTab('pacientes')" class="v2-panel p-5 text-left hover:-translate-y-0.5 transition">
-                        <span class="text-2xl">👥</span><h3 class="v2-section-title mt-3">Paciente 360 / CRM</h3><p class="v2-section-hint mt-1">Contacto, citas, pagos, paquetes, historia y actividad en una sola ficha.</p>
+                        <span class="v2-feature-icon"><svg class="v2-icon"><use href="#i-users"></use></svg></span><h3 class="v2-section-title mt-3">Paciente 360 / CRM</h3><p class="v2-section-hint mt-1">Contacto, citas, pagos, paquetes, historia y actividad en una sola ficha.</p>
                     </button>
                     <button onclick="switchTab('finanzas')" class="v2-panel p-5 text-left hover:-translate-y-0.5 transition">
-                        <span class="text-2xl">▤</span><h3 class="v2-section-title mt-3">Control financiero</h3><p class="v2-section-hint mt-1">Facturación, cobros, pendientes, proyección y análisis del consultorio.</p>
+                        <span class="v2-feature-icon"><svg class="v2-icon"><use href="#i-wallet"></use></svg></span><h3 class="v2-section-title mt-3">Control financiero</h3><p class="v2-section-hint mt-1">Facturación, cobros, pendientes, proyección y análisis del consultorio.</p>
                     </button>
                     <button onclick="openAssistantModal()" class="v2-panel p-5 text-left hover:-translate-y-0.5 transition">
-                        <span class="text-2xl">✦</span><h3 class="v2-section-title mt-3">Asistente inteligente</h3><p class="v2-section-hint mt-1">Consulta agenda, pacientes y métricas administrativas por texto o voz.</p>
+                        <span class="v2-feature-icon"><svg class="v2-icon"><use href="#i-spark"></use></svg></span><h3 class="v2-section-title mt-3">Asistente inteligente</h3><p class="v2-section-hint mt-1">Consulta agenda, pacientes y métricas administrativas por texto o voz.</p>
                     </button>
                 </div>
+            </section>
+
+
+            <!-- V2: RECEPCIÓN OPERATIVA -->
+            <section id="sec-recepcion" class="space-y-5 hidden">
+                <div class="v2-page-head"><div><span class="v2-eyebrow">Operaciones</span><h2>Recepción del día</h2><p>Confirma llegada, inicia atención, completa la sesión y controla el cobro desde una sola vista.</p></div><div class="flex gap-2 items-center"><input type="date" id="v2-reception-date" class="v2-field" onchange="renderV2Reception()"><button onclick="openAppointmentModal()" class="v2-primary-btn"><svg class="v2-icon"><use href="#i-plus"></use></svg>Nueva cita</button></div></div>
+                <div id="v2-reception-kpis" class="grid grid-cols-2 md:grid-cols-5 gap-3"></div>
+                <div class="v2-panel p-4 md:p-5"><div class="flex items-center justify-between mb-4"><div><h3 class="v2-section-title">Flujo de atención</h3><p class="v2-section-hint">Cada cambio se guarda en la misma cita existente de Firebase.</p></div><span class="v2-safe-badge">Sin migrar datos</span></div><div id="v2-reception-list"></div></div>
+            </section>
+
+            <!-- V2: GESTIÓN CLÍNICA -->
+            <section id="sec-clinica" class="space-y-5 hidden">
+                <div class="v2-page-head"><div><span class="v2-eyebrow">Clínica</span><h2>Gestión clínica</h2><p>Control de historias clínicas, notas de sesión y continuidad terapéutica.</p></div></div>
+                <div id="v2-clinical-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                <div class="v2-panel p-4 md:p-5"><div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4"><div><h3 class="v2-section-title">Pacientes y documentación clínica</h3><p class="v2-section-hint">La información clínica continúa almacenada en las colecciones actuales.</p></div><input id="v2-clinical-search" oninput="renderV2Clinical()" class="v2-field" placeholder="Buscar paciente..."></div><div id="v2-clinical-table" class="overflow-x-auto"></div></div>
+            </section>
+
+            <!-- V2: CAJA DIARIA -->
+            <section id="sec-caja" class="space-y-5 hidden">
+                <div class="v2-page-head"><div><span class="v2-eyebrow">Administración</span><h2>Caja diaria</h2><p>Conciliación automática basada en pagos de citas; no crea una base paralela ni duplica movimientos.</p></div><input type="date" id="v2-cash-date" class="v2-field" onchange="renderV2Cash()"></div>
+                <div id="v2-cash-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5"><div class="v2-panel p-4 md:p-5"><h3 class="v2-section-title">Cobros registrados</h3><p class="v2-section-hint mb-3">Citas con estado de pago Pagado.</p><div id="v2-cash-paid"></div></div><div class="v2-panel p-4 md:p-5"><h3 class="v2-section-title">Pendiente de cobro</h3><p class="v2-section-hint mb-3">Atenciones del día aún pendientes.</p><div id="v2-cash-pending"></div></div></div>
+            </section>
+
+            <!-- V2: CENTRO DE ALERTAS -->
+            <section id="sec-alertas" class="space-y-5 hidden">
+                <div class="v2-page-head"><div><span class="v2-eyebrow">Seguimiento</span><h2>Centro de alertas</h2><p>Detecta automáticamente cobros pendientes, ausencia de seguimiento, historias incompletas y paquetes por terminar.</p></div><button onclick="renderV2Alerts()" class="v2-secondary-btn">Actualizar</button></div>
+                <div id="v2-alert-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
+                <div id="v2-alert-center" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
             </section>
 
             <!-- SECCIÓN: CITAS -->
@@ -344,7 +399,7 @@
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
                         <div class="flex flex-col md:flex-row gap-3">
                             <div class="relative flex-grow">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">🔍</span>
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none"><svg class="v2-icon"><use href="#i-search"></use></svg></span>
                                 <input type="text" id="appointment-search" oninput="renderAppointments()" placeholder="Buscar paciente por nombre o notas..."
                                     class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
                             </div>
@@ -391,18 +446,30 @@
 
             <!-- SECCIÓN: PACIENTES -->
             <section id="sec-pacientes" class="space-y-4 hidden">
+
+                <div class="v2-panel p-4 md:p-5">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+                        <div><h3 class="v2-section-title">Segmentación y seguimiento CRM</h3><p class="v2-section-hint">Prioriza pacientes por etapa, continuidad y pagos.</p></div>
+                        <div class="flex flex-wrap gap-2">
+                            <select id="v2-crm-filter" onchange="renderV2CRM()" class="v2-field"><option value="todos">Todos los estados</option><option value="nuevo">Nuevos</option><option value="tratamiento">En tratamiento</option><option value="seguimiento">Seguimiento</option><option value="pausado">Pausados</option><option value="alta">Alta</option><option value="inactivo">Inactivos</option></select>
+                            <input id="v2-crm-search" oninput="renderV2CRM()" class="v2-field" placeholder="Buscar en CRM...">
+                        </div>
+                    </div>
+                    <div id="v2-crm-summary" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4"></div>
+                    <div id="v2-crm-table" class="mt-4 overflow-x-auto"></div>
+                </div>
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                     <div>
                         <h2 class="text-lg font-bold text-slate-800">Pacientes / CRM Clínico</h2>
                         <p class="text-xs text-slate-500">Gestiona el ciclo del paciente, su información administrativa, clínica y de seguimiento.</p>
                     </div>
                     <button onclick="openPatientModal()" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-                        ➕ Nuevo Paciente
+                        <svg class="v2-icon"><use href="#i-plus"></use></svg> Nuevo Paciente
                     </button>
                 </div>
                 <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
                     <div class="relative">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none">🔍</span>
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none"><svg class="v2-icon"><use href="#i-search"></use></svg></span>
                         <input type="text" id="patient-search-input" oninput="renderPatients()" placeholder="Buscar paciente por nombre o teléfono..."
                             class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
                     </div>
@@ -863,8 +930,12 @@
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Estado de la Cita</label>
                     <select id="app-status" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:outline-none">
-                        <option value="pendiente">Pendiente de Atención</option>
-                        <option value="completada">Completada (Asistió)</option>
+                        <option value="pendiente">Agendada / Pendiente</option>
+                        <option value="confirmada">Confirmada</option>
+                        <option value="arrived">Llegó / En espera</option>
+                        <option value="in_session">En sesión</option>
+                        <option value="completada">Completada</option>
+                        <option value="no_asistio">No asistió</option>
                         <option value="cancelada">Cancelada</option>
                     </select>
                 </div>
@@ -963,7 +1034,11 @@
                             <option value="atendido">Atendido</option>
                             <option value="no_asistio">No asistió</option>
                             <option value="cancelo">Canceló</option>
-                            <option value="recurrente">Recurrente</option>
+                            <option value="recurrente">En tratamiento / recurrente</option>
+                            <option value="seguimiento">Seguimiento</option>
+                            <option value="pausado">Pausado</option>
+                            <option value="alta">Alta terapéutica</option>
+                            <option value="inactivo">Inactivo</option>
                         </select>
                     </div>
                 </div>
@@ -1623,25 +1698,26 @@
                 </div>
             </div>
             <div class="bg-white border-t border-slate-200 p-4 flex flex-wrap justify-end gap-2">
-                <button id="p360-edit" class="v2-quick-btn">✏ Editar datos</button>
-                <button id="p360-open-history" class="v2-quick-btn">📋 Historial</button>
-                <button id="p360-open-clinical" class="v2-quick-btn">🩺 Historia clínica</button>
+                <button id="p360-edit" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-edit"></use></svg>Editar datos</button>
+                <button id="p360-open-history" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-calendar"></use></svg>Historial</button>
+                <button id="p360-open-clinical" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-clinical"></use></svg>Historia clínica</button>
             </div>
         </div>
     </div>
 
     <div class="v2-mobile-nav no-print">
-        <button data-v2-nav="inicio" onclick="switchTab('inicio')" class="v2-nav-active"><b>⌂</b>Inicio</button>
-        <button data-v2-nav="citas" onclick="switchTab('citas')"><b>🗓</b>Agenda</button>
-        <button data-v2-nav="pacientes" onclick="switchTab('pacientes')"><b>👥</b>Pacientes</button>
-        <button data-v2-nav="finanzas" onclick="switchTab('finanzas')"><b>▤</b>Finanzas</button>
+        <button data-v2-nav="inicio" onclick="switchTab('inicio')" class="v2-nav-active"><svg class="v2-icon"><use href="#i-home"></use></svg><span>Inicio</span></button>
+        <button data-v2-nav="citas" onclick="switchTab('citas')"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Agenda</span></button>
+        <button data-v2-nav="recepcion" onclick="switchTab('recepcion')"><svg class="v2-icon"><use href="#i-reception"></use></svg><span>Recepción</span></button>
+        <button data-v2-nav="pacientes" onclick="switchTab('pacientes')"><svg class="v2-icon"><use href="#i-users"></use></svg><span>Pacientes</span></button>
+        <button data-v2-nav="finanzas" onclick="switchTab('finanzas')"><svg class="v2-icon"><use href="#i-wallet"></use></svg><span>Finanzas</span></button>
     </div>
 
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script type="module" src="app.js?v=20261006-LOGINFIX-2"></script>
+    <script type="module" src="app.js?v=20261006-V2PRO-3"></script>
     <script src="assistant.js?v=20261001-3"></script>
     <script src="ui.js?v=20261006-2"></script>
-    <script src="v2.js?v=20261006-LOGINFIX-2"></script>
+    <script src="v2.js?v=20261006-V2PRO-3"></script>
 </body>
 </html>
