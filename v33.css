@@ -1,0 +1,102 @@
+:root{
+  --v33-primary:#2d6c67;
+  --v33-primary-deep:#244f4b;
+  --v33-primary-soft:#eef6f3;
+  --v33-sage:#d7e7e1;
+  --v33-ink:#253633;
+  --v33-muted:#6b7b76;
+  --v33-line:#dbe7e2;
+  --v33-bg:#f6f8f7;
+  --v33-card:#ffffff;
+  --v33-red:#c65a5f;
+  --v33-red-soft:#fbecee;
+  --v33-amber:#d5a14a;
+  --v33-shadow:0 18px 42px rgba(36,79,75,.09);
+}
+
+/* --- Finance: clearer and more elegant presentation --- */
+#sec-finanzas{gap:20px!important}
+#sec-finanzas .v23-finance-toolbar{background:linear-gradient(180deg,#ffffff 0%,#fbfcfb 100%);border:1px solid var(--v33-line);border-radius:24px;padding:22px;box-shadow:var(--v33-shadow)}
+#sec-finanzas .v23-finance-toolbar-head h2{font-size:29px;line-height:1.1;letter-spacing:-.03em;color:var(--v33-ink)}
+#sec-finanzas .v23-finance-toolbar-head p{color:var(--v33-muted)}
+#sec-finanzas .v23-period-tabs{gap:10px;flex-wrap:wrap}
+#sec-finanzas .v23-period-tabs button{border:1px solid var(--v33-line);background:#fff;border-radius:16px;box-shadow:none}
+#sec-finanzas .v23-period-tabs button span{color:var(--v33-ink)}
+#sec-finanzas .v23-period-tabs button small{color:var(--v33-muted)}
+#sec-finanzas .v23-period-tabs .v23-period-active{background:var(--v33-primary-soft)!important;border-color:#b7d4ca!important;box-shadow:inset 0 0 0 1px #b7d4ca}
+#sec-finanzas .v23-finance-datebar,#sec-finanzas .v23-custom-range{border-color:var(--v33-line);background:#fcfdfd;border-radius:18px}
+#sec-finanzas .v23-period-label{background:var(--v33-primary-soft);color:var(--v33-primary);border:1px solid #cfe2dc;border-radius:999px;padding:10px 14px;font-weight:800}
+#sec-finanzas .v23-today-btn{background:var(--v33-primary)!important;color:#fff!important}
+#sec-finanzas>.bg-white,#sec-finanzas .v3-card{border:1px solid var(--v33-line)!important;border-radius:22px!important;box-shadow:var(--v33-shadow)!important;background:var(--v33-card)!important}
+#sec-finanzas h2,#sec-finanzas h3{color:var(--v33-ink)!important;letter-spacing:-.02em}
+#sec-finanzas p{color:var(--v33-muted)}
+#sec-finanzas table thead tr{border-color:#ebf1ee!important}
+#sec-finanzas table th{color:#74837e!important;font-size:11px!important;letter-spacing:.07em}
+#sec-finanzas table td{color:var(--v33-ink)}
+#sec-finanzas .text-indigo-900,#sec-finanzas .text-violet-900,#sec-finanzas .text-indigo-800,#sec-finanzas .text-indigo-600{color:var(--v33-primary-deep)!important}
+#sec-finanzas .bg-indigo-50{background:#edf5f3!important;border-color:#d2e4df!important}
+#sec-finanzas .border-indigo-200{border-color:#d2e4df!important}
+#sec-finanzas .text-emerald-600,#sec-finanzas .text-emerald-800,#sec-finanzas .text-emerald-900{color:#2f7b61!important}
+#sec-finanzas .bg-emerald-50{background:#ebf7f0!important;border-color:#cce7d9!important}
+#sec-finanzas .text-amber-600,#sec-finanzas .text-amber-800{color:#9a712a!important}
+#sec-finanzas .bg-amber-50{background:#fbf6ea!important;border-color:#ebdbb0!important}
+#sec-finanzas .text-rose-700{color:#a24a4f!important}
+#sec-finanzas .bg-rose-50\/60{background:#fdf0f1!important}
+#sec-finanzas .border-rose-100{border-color:#f1d3d6!important}
+#sec-finanzas .bg-sky-50\/60{background:#edf7fb!important}
+#sec-finanzas .border-sky-100{border-color:#d4e9f3!important}
+#sec-finanzas .v33-fin-title{display:flex;align-items:center;gap:10px}
+.v33-fin-ico{width:36px;height:36px;border-radius:12px;background:var(--v33-primary-soft);display:inline-grid;place-items:center;color:var(--v33-primary)}
+#sec-finanzas .v33-soft-note{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:999px;background:#fbfcfb;border:1px solid var(--v33-line);font-size:12px;font-weight:700;color:var(--v33-muted)}
+#sec-finanzas .v33-metric-card{position:relative;overflow:hidden}
+#sec-finanzas .v33-metric-card::after{content:"";position:absolute;inset:auto 0 0 0;height:3px;background:linear-gradient(90deg,var(--v33-primary),transparent)}
+#sec-finanzas .v33-metric-card[data-tone="success"]::after{background:linear-gradient(90deg,#2f7b61,transparent)}
+#sec-finanzas .v33-metric-card[data-tone="warn"]::after{background:linear-gradient(90deg,#d5a14a,transparent)}
+#sec-finanzas .v33-metric-card[data-tone="info"]::after{background:linear-gradient(90deg,#3f7d9c,transparent)}
+#sec-finanzas .v33-card-headline{display:flex;align-items:center;gap:10px;margin-bottom:2px}
+#sec-finanzas .v33-card-headline strong{font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+#sec-finanzas .v33-minibadge{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#fff;border:1px solid rgba(0,0,0,.06);box-shadow:0 5px 16px rgba(41,73,67,.05)}
+#sec-finanzas .v33-block-title{display:flex;align-items:center;gap:10px}
+#sec-finanzas .v33-block-title .v33-fin-ico{width:32px;height:32px;border-radius:10px}
+
+/* --- Report modal --- */
+#print-modal .v31-report-modal{border:1px solid rgba(255,255,255,.78);box-shadow:0 25px 60px rgba(29,53,49,.22)}
+#print-modal .v31-report-modal-head{background:linear-gradient(135deg,#2d6c67,#4f8780)!important}
+#print-modal .v31-report-modal-icon{background:rgba(255,255,255,.16)!important;color:#fff!important;border:1px solid rgba(255,255,255,.18)!important}
+#print-modal .v31-report-modal-head span{letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:#dff0eb!important}
+#print-modal .v31-report-modal-head h3{font-size:24px;letter-spacing:-.03em}
+#print-modal .v31-report-modal-head p{color:#d8ebe6!important}
+#print-modal .v31-report-segments button{border:1px solid var(--v33-line)!important;background:#fff!important;color:var(--v33-ink)!important;border-radius:14px!important}
+#print-modal .v31-report-segments .v31-segment-active{background:var(--v33-primary-soft)!important;color:var(--v33-primary)!important;border-color:#bfd8d0!important}
+#print-modal .v31-field-wrap input,#print-modal .v31-check-row,#print-modal .v31-form-block{border-color:var(--v33-line)!important}
+
+/* --- New patient / appointment / profile / assistant forms --- */
+#appointment-modal>div,#patient-modal>div,#profile-modal>div,#assistant-modal>div{max-width:740px!important}
+#appointment-form,#patient-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 16px;padding:26px!important;background:linear-gradient(180deg,#fff 0%,#fbfcfb 100%)}
+#appointment-form>div,#patient-form>div{padding:16px;border:1px solid #e6efec;border-radius:18px;background:#fff;box-shadow:0 4px 18px rgba(42,71,66,.035)}
+#appointment-form>div:has(textarea),#patient-form>div:has(textarea){grid-column:1/-1}
+#appointment-form>.grid,#patient-form>.grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:0;border:0;background:transparent;box-shadow:none}
+#appointment-form>div:last-child,#patient-form>div:last-child{grid-column:1/-1;padding:0;border:0;background:transparent;box-shadow:none}
+#appointment-form .bg-amber-50\/60,#patient-form .bg-amber-50\/60,#patient-form .bg-indigo-50\/60{background:linear-gradient(180deg,#fffdf8 0%,#fff 100%)!important;border-color:#eadcc0!important}
+#patient-form .bg-indigo-50\/60{background:linear-gradient(180deg,#f7fbfa 0%,#fff 100%)!important;border-color:#d6e9e3!important}
+#appointment-modal h3,#patient-modal h3,#profile-modal h3,#assistant-modal h3{font-size:22px!important;display:flex;align-items:center;gap:10px}
+#appointment-modal .v33-modal-title-icon,#patient-modal .v33-modal-title-icon,#profile-modal .v33-modal-title-icon,#assistant-modal .v33-modal-title-icon{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2)}
+#appointment-modal .v33-modal-hint,#patient-modal .v33-modal-hint{margin-top:6px;color:#daece8;font-size:12px}
+#appointment-form button[type="submit"],#patient-form button[type="submit"],#profile-modal .bg-teal-700,#profile-modal .bg-indigo-600{box-shadow:0 12px 28px rgba(45,108,103,.18)}
+#appointment-form button[type="submit"] svg,#patient-form button[type="submit"] svg{width:16px;height:16px}
+
+/* history modal slight polish */
+#patient-history-modal .v33-history-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+#patient-history-modal .v33-history-chip{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:var(--v33-primary-soft);color:var(--v33-primary);font-size:12px;font-weight:800;border:1px solid #cce1db}
+
+/* utility */
+.v33-hidden{display:none!important}
+
+@media(max-width:920px){
+  #appointment-modal>div,#patient-modal>div{max-width:680px!important}
+}
+@media(max-width:760px){
+  #appointment-form,#patient-form{grid-template-columns:1fr;padding:18px!important}
+  #appointment-form>.grid,#patient-form>.grid{grid-template-columns:1fr!important}
+  #appointment-form>div,#patient-form>div{padding:14px}
+}
