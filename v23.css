@@ -1,0 +1,48 @@
+/* Psicología Pro V2.3 — experiencia visual y operativa */
+:root{
+  --v23-wine:#7d3f4a;
+  --v23-wine-dark:#65313b;
+  --v23-wine-soft:#f8eef0;
+  --v23-teal:#356b69;
+  --v23-teal-2:#4f8e8b;
+  --v23-bg:#f4f7f6;
+  --v23-card:#ffffff;
+  --v23-line:#dde7e4;
+  --v23-ink:#24312d;
+  --v23-muted:#71817b;
+}
+body{background:radial-gradient(circle at 92% 2%,rgba(79,142,139,.08),transparent 22rem),var(--v23-bg)!important}
+.v2-header{box-shadow:0 1px 0 rgba(36,49,45,.06)!important}
+.v2-brand-logo{height:54px}
+@media(min-width:1024px){
+  .v2-sidebar{width:248px!important;padding:22px 14px!important;background:linear-gradient(180deg,#fff,#fbfdfc)!important}
+  #app-container>main{margin-left:248px!important;width:calc(100% - 248px)!important;padding:30px 38px 44px!important}
+  .v2-sidebar button{padding:12px 14px!important;border-radius:13px!important}
+  .v2-sidebar-label{padding-left:14px!important}
+}
+.v2-sidebar button.v2-nav-active{background:linear-gradient(135deg,#315e5c,#4f8e8b)!important;box-shadow:0 9px 25px rgba(53,107,105,.20)!important}
+.v2-dashboard-hero{min-height:154px;display:flex;align-items:center;background:linear-gradient(115deg,#fff 0%,#f7fbfa 45%,#f7efea 100%);border-radius:26px!important;box-shadow:0 18px 55px rgba(36,49,45,.065)}
+.v2-kpi{border-radius:20px!important;box-shadow:0 8px 30px rgba(36,49,45,.045)!important}
+.v2-panel{border-radius:22px!important;box-shadow:0 10px 36px rgba(36,49,45,.045)!important}
+
+/* Agenda: rangos manuales */
+.v23-day-blocks-wrap{border:1px solid #ead7db;background:linear-gradient(135deg,#fff,#fbf3f5);border-radius:18px;padding:14px}
+.v23-day-blocks-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.v23-day-blocks-head>div{display:flex;align-items:center;gap:7px;color:var(--v23-wine-dark);font-size:12px}.v23-day-blocks-head button{font-size:10px;font-weight:800;color:var(--v23-wine);padding:6px 9px;border:1px solid #e4c9cf;border-radius:9px;background:#fff}
+.v23-day-blocks{display:flex;flex-wrap:wrap;gap:8px}.v23-day-block{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ead7db;border-radius:12px;padding:8px 10px;min-width:220px;color:var(--v23-wine-dark)}.v23-day-block .v2-icon{width:15px;height:15px}.v23-day-block strong{display:block;font-size:11px}.v23-day-block span{display:block;font-size:9px;color:#97727a}.v23-day-block button{margin-left:auto;font-size:9px;font-weight:800;color:#9d4f5d}
+.v23-block-manager{background:linear-gradient(135deg,#f9fbfa,#fff7f8);border:1px solid #e2e9e7;border-radius:20px;padding:16px;margin-bottom:16px}.v23-block-manager-title{display:flex;align-items:flex-start;gap:10px}.v23-block-manager-icon{width:38px;height:38px;border-radius:12px;background:var(--v23-wine-soft);color:var(--v23-wine);display:grid;place-items:center}.v23-block-manager-title h3{font-size:14px;font-weight:850;color:#34443e}.v23-block-manager-title p{font-size:10px;color:#82908b;margin-top:2px}.v23-block-form{display:grid;grid-template-columns:1.05fr .8fr .8fr 1.8fr auto;gap:8px;align-items:end;margin-top:14px}.v23-block-form label,.v23-custom-range label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.07em;font-weight:850;color:#81908a;margin:0 0 5px 2px}.v23-block-reason{min-width:0}.v23-block-list-title{font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.08em;color:#98a49f;margin-top:14px;margin-bottom:6px}.v23-block-list{display:flex;gap:7px;flex-wrap:wrap}.v23-block-row{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #ead7db;border-radius:11px;padding:8px 10px;min-width:230px}.v23-block-row strong{font-size:10px;color:var(--v23-wine-dark);display:block}.v23-block-row span{font-size:9px;color:#92717a;display:block}.v23-block-row button{margin-left:auto;color:#a44f5e;width:28px;height:28px;border-radius:8px;display:grid;place-items:center}.v23-block-row button:hover{background:var(--v23-wine-soft)}.v23-empty-mini{font-size:10px;color:#96a29d;padding:6px 0}
+.v23-free-slot,.v23-appt-slot,.v23-manual-slot,.v23-unavailable-slot{min-height:46px;padding:7px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.v23-free-slot{background:#eaf7f0;color:#327054;border:1px solid #cce9d7}.v23-appt-slot{background:#f9e8e9;color:#944752;border:1px solid #ecc6ca}.v23-manual-slot{background:linear-gradient(135deg,var(--v23-wine-dark),var(--v23-wine));color:#fff;border:1px solid #5e2d36;box-shadow:0 5px 12px rgba(125,63,74,.16)}.v23-unavailable-slot{background:#f1f3f2;color:#83908b;border:1px solid #e3e8e6}.v23-free-slot span,.v23-appt-slot span,.v23-manual-slot span,.v23-unavailable-slot span{font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.035em}.v23-appt-slot small,.v23-manual-slot small{font-size:8px;margin-top:2px;max-width:86px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Finanzas: selector profesional */
+.v23-finance-toolbar{background:linear-gradient(140deg,#fff,#f7fbfa);border:1px solid var(--v23-line);border-radius:24px;padding:20px;box-shadow:0 14px 40px rgba(36,49,45,.05)}.v23-finance-toolbar-head{display:flex;align-items:center;justify-content:space-between;gap:18px}.v23-finance-toolbar-head h2{font-size:23px;font-weight:850;letter-spacing:-.025em;color:var(--v23-ink)}.v23-finance-toolbar-head p{font-size:11px;color:var(--v23-muted);margin-top:4px}.v23-toolbar-actions{display:flex;gap:8px}.v23-period-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:18px;padding:6px;border-radius:16px;background:#edf3f1}.v23-period-tabs button{min-height:58px;text-align:left;padding:9px 12px;border-radius:12px;color:#63736d;transition:.18s;border:1px solid transparent}.v23-period-tabs button:hover{background:rgba(255,255,255,.72)}.v23-period-tabs button span{font-size:12px;font-weight:850;display:block}.v23-period-tabs button small{font-size:8px;display:block;color:#94a09b;margin-top:2px}.v23-period-tabs button.v23-period-active{background:#fff;color:var(--v23-teal);border-color:#cbded9;box-shadow:0 5px 15px rgba(36,49,45,.07)}.v23-period-tabs button.v23-period-active small{color:#69938e}.v23-finance-datebar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px}.v23-date-nav{display:flex;align-items:center;gap:6px}.v23-date-nav>button:not(.v23-today-btn){width:36px;height:36px;border-radius:10px;border:1px solid var(--v23-line);background:#fff;color:#60726b;display:grid;place-items:center}.v23-date-nav .v2-field{width:155px}.v23-today-btn{height:36px;padding:0 11px;border-radius:10px;background:var(--brand-teal-soft);color:var(--v23-teal);font-size:10px;font-weight:850}.v23-date-nav-disabled{opacity:.38;pointer-events:none}.v23-period-label{font-size:11px;font-weight:800;color:#52645d;background:#fff;border:1px solid var(--v23-line);padding:9px 12px;border-radius:11px}.v23-custom-range{margin-top:12px;padding:12px;border:1px dashed #bed3cf;border-radius:14px;background:#fbfdfc;display:grid;grid-template-columns:1fr 1fr auto;gap:9px;align-items:end}.v23-custom-range.hidden{display:none!important}
+#sec-finanzas>.bg-white{border-radius:22px!important;border-color:var(--v23-line)!important;box-shadow:0 8px 28px rgba(36,49,45,.04)!important}
+#sec-finanzas h2{letter-spacing:-.015em}
+
+/* Menos emojis / sensación SaaS */
+#sec-citas .bg-white,#sec-pacientes .bg-white{border-color:var(--v23-line)!important;box-shadow:0 7px 26px rgba(36,49,45,.035)!important}
+#btn-revisar-horario{background:#f4ecee!important;color:var(--v23-wine)!important;border:1px solid #ead7db!important}
+
+@media(max-width:900px){.v23-block-form{grid-template-columns:1fr 1fr}.v23-block-reason{grid-column:1/-1}.v23-block-form>button{grid-column:1/-1}.v23-finance-toolbar-head{align-items:flex-start;flex-direction:column}.v23-toolbar-actions{width:100%}.v23-toolbar-actions>*{flex:1}.v23-period-tabs{grid-template-columns:repeat(2,1fr)}.v23-period-tabs button:last-child{grid-column:1/-1}.v23-finance-datebar{align-items:stretch;flex-direction:column}.v23-date-nav .v2-field{flex:1;width:auto}.v23-period-label{text-align:center}.v23-custom-range{grid-template-columns:1fr 1fr}.v23-custom-range>button{grid-column:1/-1}}
+@media(max-width:520px){.v23-block-form{grid-template-columns:1fr}.v23-block-reason,.v23-block-form>button{grid-column:auto}.v23-period-tabs{grid-template-columns:1fr 1fr}.v23-period-tabs button{min-height:50px}.v23-finance-toolbar{padding:15px}.v23-finance-toolbar-head h2{font-size:20px}.v23-custom-range{grid-template-columns:1fr}.v23-custom-range>button{grid-column:auto}.v23-day-block{width:100%}}
+.v23-page-banner{background:linear-gradient(120deg,#fff 0%,#f7fbfa 58%,#f8eef0 100%);border:1px solid var(--v23-line);border-radius:24px;padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px;box-shadow:0 14px 40px rgba(36,49,45,.05)}.v23-page-banner h2{font-size:23px;font-weight:850;letter-spacing:-.025em;color:var(--v23-ink)}.v23-page-banner p{font-size:11px;color:var(--v23-muted);margin-top:4px}.v23-page-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:700px){.v23-page-banner{align-items:stretch;flex-direction:column;padding:16px}.v23-page-banner h2{font-size:20px}.v23-page-actions>*{flex:1}}

@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Psicología Pro · Gestión Clínica</title>
+    <title>Psicología Pro V2.3 · Gestión Clínica</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="v2.css?v=20261006-1">
+    <link rel="stylesheet" href="v23.css?v=20261007-1">
 <style>
 .assistant-chip{padding:.45rem .7rem;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:.7rem;font-size:.72rem;font-weight:700;transition:.15s}.assistant-chip:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9}.assistant-result{border:1px solid #e2e8f0;border-radius:1rem;overflow:hidden}.assistant-result table{width:100%;font-size:.75rem;border-collapse:collapse}.assistant-result th{background:#f8fafc;text-align:left;padding:.55rem;color:#64748b;font-weight:800}.assistant-result td{padding:.55rem;border-top:1px solid #f1f5f9;color:#334155}.assistant-kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:.8rem;padding:.65rem}.assistant-kpi strong{display:block;font-size:1rem;color:#0f172a}.assistant-kpi span{font-size:.65rem;color:#64748b}.assistant-loading{display:inline-flex;gap:4px}.assistant-loading i{width:6px;height:6px;border-radius:50%;background:#8b5cf6;animation:assistantPulse 1s infinite}.assistant-loading i:nth-child(2){animation-delay:.15s}.assistant-loading i:nth-child(3){animation-delay:.3s}@keyframes assistantPulse{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
 </style>
@@ -34,6 +35,11 @@
   <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4z"/></symbol>
   <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h9l4 4v16H6z"/><path d="M14 2v5h5"/></symbol>
   <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 11v5M14 11v5"/></symbol>
+  <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></symbol>
 </svg>
 
 
@@ -214,7 +220,7 @@
                 <div class="flex items-center gap-3">
                     <img src="logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga" class="v2-brand-logo">
                     <div class="hidden sm:block">
-                        <div class="v2-brand-title">Psicología Pro <span class="text-[9px] px-2 py-0.5 rounded-full bg-[#eaf5f4] text-[#356b69] ml-1">V2</span></div>
+                        <div class="v2-brand-title">Psicología Pro <span class="text-[9px] px-2 py-0.5 rounded-full bg-[#eaf5f4] text-[#356b69] ml-1">V2.3</span></div>
                         <p class="v2-brand-subtitle flex items-center gap-1.5 mt-1">
                             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block" id="sync-indicator-dot"></span>
                             <span id="sync-indicator-text">Gestión clínica conectada</span>
@@ -346,6 +352,10 @@
 
             <!-- SECCIÓN: CITAS -->
             <section id="sec-citas" class="space-y-4 hidden">
+                <div class="v23-page-banner">
+                    <div><span class="v2-eyebrow">Operación clínica</span><h2>Agenda y disponibilidad</h2><p>Gestiona citas, estados de atención y rangos ocupados desde una sola vista.</p></div>
+                    <div class="v23-page-actions"><button onclick="openHorarioModal()" class="v2-secondary-btn"><svg class="v2-icon"><use href="#i-lock"></use></svg>Disponibilidad</button><button onclick="openAppointmentModal()" class="v2-primary-btn"><svg class="v2-icon"><use href="#i-plus"></use></svg>Nueva cita</button></div>
+                </div>
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
                         <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Citas Hoy</span>
@@ -387,10 +397,10 @@
                 <!-- Toggle Vista Día / Vista Mes -->
                 <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold text-slate-400 uppercase mr-1">Vista:</span>
-                    <button onclick="setCitasView('dia')" id="btn-view-dia" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">📅 Día</button>
-                    <button onclick="setCitasView('mes')" id="btn-view-mes" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">🗓️ Mes</button>
+                    <button onclick="setCitasView('dia')" id="btn-view-dia" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5"><svg class="v2-icon"><use href="#i-calendar"></use></svg>Día</button>
+                    <button onclick="setCitasView('mes')" id="btn-view-mes" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition flex items-center gap-1.5"><svg class="v2-icon"><use href="#i-calendar"></use></svg>Mes</button>
                     <button onclick="openHorarioModal()" id="btn-revisar-horario" class="ml-auto px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 text-xs font-bold rounded-lg transition flex items-center gap-1.5">
-                        🔍 Revisar Horario
+                        <svg class="v2-icon"><use href="#i-lock"></use></svg> Disponibilidad
                     </button>
                 </div>
 
@@ -422,6 +432,10 @@
                         </div>
                     </div>
 
+                    <div id="day-manual-blocks-wrap" class="hidden v23-day-blocks-wrap">
+                        <div class="v23-day-blocks-head"><div><svg class="v2-icon"><use href="#i-lock"></use></svg><strong>Rangos bloqueados manualmente</strong></div><button onclick="openHorarioModal()">Administrar bloqueos</button></div>
+                        <div id="day-manual-blocks" class="v23-day-blocks"></div>
+                    </div>
                     <div id="appointments-list" class="space-y-3"></div>
                 </div>
 
@@ -479,30 +493,39 @@
 
             <!-- SECCIÓN: FINANZAS -->
             <section id="sec-finanzas" class="space-y-6 hidden">
-                <!-- Selector de Periodo + Impresión -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3">
-                    <div class="flex items-center gap-2 flex-wrap">
-                        <span class="text-xs font-bold text-slate-400 uppercase mr-1">Periodo:</span>
-                        <button onclick="setFinancePeriod('todo')" id="btn-fp-todo" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">Todo el Tiempo</button>
-                        <button onclick="setFinancePeriod('mes')" id="btn-fp-mes" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">Este Mes</button>
-                        <button onclick="setFinancePeriod('semana')" id="btn-fp-semana" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">Esta Semana</button>
-                        <button onclick="setFinancePeriod('dia')" id="btn-fp-dia" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">Hoy</button>
-                        <button onclick="setFinancePeriod('personalizado')" id="btn-fp-personalizado" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">Rango</button>
+                <!-- V2.3: CENTRO DE FILTROS FINANCIEROS -->
+                <div class="v23-finance-toolbar">
+                    <div class="v23-finance-toolbar-head">
+                        <div>
+                            <span class="v2-eyebrow">Control financiero</span>
+                            <h2>Finanzas del consultorio</h2>
+                            <p>Analiza caja, cobranza y rendimiento por día, semana, mes, rango o todo el historial.</p>
+                        </div>
+                        <div class="v23-toolbar-actions">
+                            <button onclick="downloadFinanceExcel()" class="v2-secondary-btn"><svg class="v2-icon"><use href="#i-download"></use></svg>Excel</button>
+                            <button onclick="openPrintModal(window._profileState && window._profileState.financePeriod === 'mes' ? 'mes' : (window._profileState && window._profileState.financePeriod === 'semana' ? 'semana' : (window._profileState && window._profileState.financePeriod === 'personalizado' ? 'personalizado' : 'dia')), 'finanzas')" class="v2-primary-btn"><svg class="v2-icon"><use href="#i-report"></use></svg>Reporte</button>
+                        </div>
                     </div>
-                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        <button onclick="downloadFinanceExcel()" class="w-full sm:w-auto bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-4 py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                            📊 Excel
-                        </button>
-                        <button onclick="openPrintModal(window._profileState && window._profileState.financePeriod === 'mes' ? 'mes' : (window._profileState && window._profileState.financePeriod === 'semana' ? 'semana' : (window._profileState && window._profileState.financePeriod === 'personalizado' ? 'personalizado' : 'dia')), 'finanzas')" class="w-full sm:w-auto bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-4 py-2.5 rounded-xl text-xs transition flex items-center justify-center gap-2">
-                            🖨️ Imprimir Reporte
-                        </button>
+                    <div class="v23-period-tabs" role="group" aria-label="Filtro de periodo financiero">
+                        <button onclick="setFinancePeriod('dia')" id="btn-fp-dia"><span>Día</span><small>Fecha seleccionada</small></button>
+                        <button onclick="setFinancePeriod('semana')" id="btn-fp-semana"><span>Semana</span><small>Lunes a domingo</small></button>
+                        <button onclick="setFinancePeriod('mes')" id="btn-fp-mes"><span>Mes</span><small>Mes seleccionado</small></button>
+                        <button onclick="setFinancePeriod('todo')" id="btn-fp-todo" class="v23-period-active"><span>Todo</span><small>Historial completo</small></button>
+                        <button onclick="setFinancePeriod('personalizado')" id="btn-fp-personalizado"><span>Rango</span><small>Fechas personalizadas</small></button>
                     </div>
-                </div>
-                <div id="finance-custom-range" class="hidden bg-slate-50 border border-slate-200 rounded-xl p-3">
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
-                        <div><label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Desde</label><input type="date" id="finance-custom-start" class="w-full p-2 border border-slate-200 rounded-lg bg-white text-sm"></div>
-                        <div><label class="block text-[10px] font-bold uppercase text-slate-500 mb-1">Hasta</label><input type="date" id="finance-custom-end" class="w-full p-2 border border-slate-200 rounded-lg bg-white text-sm"></div>
-                        <button onclick="applyFinanceCustomRange()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-xs font-bold">Aplicar rango</button>
+                    <div class="v23-finance-datebar">
+                        <div class="v23-date-nav">
+                            <button onclick="shiftFinancePeriod(-1)" title="Periodo anterior"><svg class="v2-icon"><use href="#i-chevron-left"></use></svg></button>
+                            <input type="date" id="finance-reference-date" onchange="setFinanceReferenceDate(this.value)" class="v2-field">
+                            <button onclick="shiftFinancePeriod(1)" title="Periodo siguiente"><svg class="v2-icon"><use href="#i-chevron-right"></use></svg></button>
+                            <button onclick="goFinanceToday()" class="v23-today-btn">Hoy</button>
+                        </div>
+                        <div id="finance-period-label" class="v23-period-label">Todo el historial</div>
+                    </div>
+                    <div id="finance-custom-range" class="hidden v23-custom-range">
+                        <div><label>Desde</label><input type="date" id="finance-custom-start" class="v2-field"></div>
+                        <div><label>Hasta</label><input type="date" id="finance-custom-end" class="v2-field"></div>
+                        <button onclick="applyFinanceCustomRange()" class="v2-primary-btn"><svg class="v2-icon"><use href="#i-check"></use></svg>Aplicar rango</button>
                     </div>
                 </div>
 
@@ -513,7 +536,7 @@
                             <h2 class="text-lg font-bold text-slate-800">💰 Estado de Caja</h2>
                             <p class="text-xs text-slate-400">Cuánto generaste, cuánto entró y cuánto te deben.</p>
                         </div>
-                        <p id="finance-period-label" class="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg">Mostrando datos de: Todo el tiempo</p>
+                        <p id="finance-period-summary-label" class="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-lg">Los indicadores responden al filtro superior</p>
                     </div>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1641,6 +1664,19 @@
             </div>
         </div>
 
+        <div class="v23-block-manager">
+            <div class="v23-block-manager-title"><div class="v23-block-manager-icon"><svg class="v2-icon"><use href="#i-lock"></use></svg></div><div><h3>Bloqueo manual de disponibilidad</h3><p>Marca vacaciones, trámites, reuniones, almuerzo u otros rangos que no deben admitir citas.</p></div></div>
+            <div class="v23-block-form">
+                <div><label>Fecha</label><input type="date" id="manual-block-date" class="v2-field"></div>
+                <div><label>Desde</label><input type="time" id="manual-block-start" value="13:00" class="v2-field"></div>
+                <div><label>Hasta</label><input type="time" id="manual-block-end" value="16:00" class="v2-field"></div>
+                <div class="v23-block-reason"><label>Motivo</label><input type="text" id="manual-block-reason" placeholder="Ej. Reunión, almuerzo, trámite..." class="v2-field"></div>
+                <button onclick="saveManualBlock()" class="v2-primary-btn"><svg class="v2-icon"><use href="#i-lock"></use></svg>Bloquear rango</button>
+            </div>
+            <div class="v23-block-list-title">Bloqueos de la semana mostrada</div>
+            <div id="manual-block-list" class="v23-block-list"></div>
+        </div>
+
         <div id="horario-capture-area" class="bg-white p-4 rounded-2xl">
             <div class="flex items-center gap-4 mb-4">
                 <img src="logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga" class="h-16 w-auto object-contain shrink-0">
@@ -1653,7 +1689,8 @@
 
             <div class="flex items-center gap-4 mb-4 text-xs font-bold text-slate-500">
                 <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-md bg-emerald-100 border border-emerald-300 inline-block"></span> Libre</span>
-                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-md bg-rose-300 border border-rose-400 inline-block"></span> Ocupado</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-md bg-rose-300 border border-rose-400 inline-block"></span> Cita</span>
+                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-md bg-[#7d3f4a] border border-[#6a313c] inline-block"></span> Bloqueo manual</span>
             </div>
 
             <div id="horario-scroll-wrap" class="overflow-x-auto pb-2">
@@ -1715,9 +1752,9 @@
 
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script type="module" src="app.js?v=20261006-V2PRO-3"></script>
+    <script type="module" src="app.js?v=20261007-V23"></script>
     <script src="assistant.js?v=20261001-3"></script>
     <script src="ui.js?v=20261006-2"></script>
-    <script src="v2.js?v=20261006-V2PRO-3"></script>
+    <script src="v2.js?v=20261007-V23"></script>
 </body>
 </html>

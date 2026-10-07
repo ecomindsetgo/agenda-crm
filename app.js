@@ -86,6 +86,8 @@ if (app) {
             financePeriod: 'todo',
             financeCustomStart: '',
             financeCustomEnd: '',
+            financeReferenceDate: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' }),
+            manualBlocks: [],
             currentUser: null
         };
 
@@ -383,6 +385,7 @@ if (app) {
                 activeListeners.forEach(u => u());
                 activeListeners = [];
                 state.appointments = [];
+                state.manualBlocks = [];
                 state.patients = [];
                 renderAll();
             }
@@ -412,11 +415,18 @@ if (app) {
             const historiesRef = collection(db, 'artifacts', appId, 'users', userId, 'clinicalHistories');
             const notesRef = collection(db, 'artifacts', appId, 'users', userId, 'clinicalNotes');
             const unsubAppts = onSnapshot(appointmentsRef, (snapshot) => {
-                state.appointments = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                const appointmentDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                // Los bloqueos manuales se guardan en la misma colección permitida por
+                // las reglas actuales, pero se separan de las citas para no contaminar
+                // estadísticas, reportes, caja, CRM ni historias de pacientes.
+                state.manualBlocks = appointmentDocs.filter(x => x && (x.isManualBlock === true || x.recordType === 'manual_block'));
+                state.appointments = appointmentDocs.filter(x => !(x && (x.isManualBlock === true || x.recordType === 'manual_block')));
                 renderAppointments();
                 if (state.citasView === 'mes') renderMonthView();
                 updateStatsDashboard();
                 if (window.renderV2Dashboard) window.renderV2Dashboard();
+                if (window.renderManualBlockList) window.renderManualBlockList();
+                if (window.actualizarGridHorarios && !document.getElementById('modal-horario')?.classList.contains('hidden')) window.actualizarGridHorarios();
             });
 
             const unsubPatients = onSnapshot(patientsRef, (snapshot) => {
@@ -1410,6 +1420,60 @@ window.printClinicalHistory = function() {
             }
         }
 
+        // ─── BLOQUEOS MANUALES DE AGENDA ──────────────────────────────────────────
+        function minutesOf(timeStr) {
+            const parts = String(timeStr || '').slice(0, 5).split(':').map(Number);
+            return Number.isFinite(parts[0]) && Number.isFinite(parts[1]) ? parts[0] * 60 + parts[1] : null;
+        }
+        function rangesOverlap(startA, endA, startB, endB) {
+            const a1 = minutesOf(startA), a2 = minutesOf(endA), b1 = minutesOf(startB), b2 = minutesOf(endB);
+            if ([a1,a2,b1,b2].some(v => v === null)) return false;
+            return a1 < b2 && a2 > b1;
+        }
+        function findManualBlockConflict(dateStr, startTime, endTime) {
+            return (state.manualBlocks || []).find(b => b.date === dateStr && rangesOverlap(startTime, endTime, b.blockStart, b.blockEnd));
+        }
+
+        window.saveManualBlock = async function () {
+            if (!state.currentUser) return;
+            const date = document.getElementById('manual-block-date')?.value;
+            const start = document.getElementById('manual-block-start')?.value;
+            const end = document.getElementById('manual-block-end')?.value;
+            const reason = document.getElementById('manual-block-reason')?.value.trim() || 'Bloqueo manual';
+            if (!date || !start || !end) { alert('Selecciona fecha, hora inicial y hora final.'); return; }
+            if (minutesOf(start) >= minutesOf(end)) { alert('La hora final debe ser posterior a la hora inicial.'); return; }
+            const overlapAppt = (state.appointments || []).find(a => a.date === date && a.status !== 'cancelada' && rangesOverlap(start, end, a.time, (()=>{ const m=minutesOf(a.time); if(m===null)return a.time; const z=m+60; return String(Math.floor(z/60)).padStart(2,'0')+':'+String(z%60).padStart(2,'0'); })()));
+            if (overlapAppt) { alert(`No se puede bloquear ese rango porque existe una cita de ${overlapAppt.patientName || 'un paciente'} a las ${overlapAppt.time}.`); return; }
+            const overlapBlock = (state.manualBlocks || []).find(b => b.date === date && rangesOverlap(start, end, b.blockStart, b.blockEnd));
+            if (overlapBlock) { alert(`Ese rango se cruza con otro bloqueo (${overlapBlock.blockStart} - ${overlapBlock.blockEnd}).`); return; }
+            const id = 'block_' + Date.now();
+            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', id);
+            await setDoc(ref, {
+                recordType: 'manual_block', isManualBlock: true, date,
+                blockStart: start, blockEnd: end, reason,
+                status: 'bloqueado', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+            });
+            const reasonEl = document.getElementById('manual-block-reason'); if (reasonEl) reasonEl.value = '';
+        };
+
+        window.deleteManualBlock = async function (id) {
+            if (!state.currentUser) return;
+            const block = (state.manualBlocks || []).find(b => b.id === id);
+            if (!block) return;
+            if (!confirm(`¿Eliminar el bloqueo del ${block.date} de ${block.blockStart} a ${block.blockEnd}?`)) return;
+            await deleteDoc(doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', id));
+        };
+
+        window.renderManualBlockList = function () {
+            const root = document.getElementById('manual-block-list');
+            if (!root) return;
+            const weekStart = state.horarioWeekStart || getMondayOf(new Date());
+            const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 5);
+            const startStr = horarioDateStr(weekStart), endStr = horarioDateStr(weekEnd);
+            const blocks = (state.manualBlocks || []).filter(b => b.date >= startStr && b.date <= endStr).sort((a,b)=>(a.date+a.blockStart).localeCompare(b.date+b.blockStart));
+            root.innerHTML = blocks.length ? blocks.map(b => `<div class="v23-block-row"><div><strong>${new Date(b.date+'T00:00:00').toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'2-digit'})} · ${b.blockStart}–${b.blockEnd}</strong><span>${(b.reason||'Bloqueo manual').replace(/[<>]/g,'')}</span></div><button onclick="deleteManualBlock('${b.id}')" title="Eliminar bloqueo"><svg class="v2-icon"><use href="#i-trash"></use></svg></button></div>`).join('') : '<div class="v23-empty-mini">No hay rangos bloqueados manualmente en esta semana.</div>';
+        };
+
         document.getElementById('appointment-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!state.currentUser) return;
@@ -1430,6 +1494,16 @@ window.printClinicalHistory = function() {
             // ─── VALIDACIÓN DE DUPLICADOS ────────────────────────────────────────
             // Excluir la cita que se está editando (si aplica)
             const otherAppts = state.appointments.filter(a => a.id !== aid);
+
+            // 0) Respetar rangos ocupados manualmente. Una cita se considera de 60 min.
+            const newStartMin = minutesOf(newTime);
+            const newEndMin = newStartMin === null ? null : newStartMin + 60;
+            const newEndTime = newEndMin === null ? newTime : String(Math.floor(newEndMin / 60)).padStart(2,'0') + ':' + String(newEndMin % 60).padStart(2,'0');
+            const manualConflict = findManualBlockConflict(newDate, newTime, newEndTime);
+            if (manualConflict) {
+                alert(`⚠️ Rango bloqueado manualmente\n\nEl horario ${newTime} se cruza con el bloqueo ${manualConflict.blockStart} - ${manualConflict.blockEnd}${manualConflict.reason ? ' (' + manualConflict.reason + ')' : ''}.\n\nElige otro horario.`);
+                return;
+            }
 
             // 1) Verificar si ya existe otra cita en la misma fecha y hora (cualquier paciente)
             const sameSlot = otherAppts.find(a => a.date === newDate && a.time === newTime);
@@ -1666,6 +1740,7 @@ window.printClinicalHistory = function() {
 
         window.renderAppointments = function() {
             const container  = document.getElementById('appointments-list');
+            if (window.renderDayManualBlocks) window.renderDayManualBlocks();
             const dateFilter = document.getElementById('date-filter').value;
             const searchVal  = document.getElementById('appointment-search').value.toLowerCase().trim();
 
@@ -2010,13 +2085,14 @@ window.printClinicalHistory = function() {
         }
 
         function getFinanceAppointments() {
+            const financeRef = state.financeReferenceDate || todayStr;
             if (state.financePeriod === 'dia') {
-                return state.appointments.filter(a => a.date === todayStr);
+                return state.appointments.filter(a => a.date === financeRef);
             } else if (state.financePeriod === 'semana') {
-                const [lunes, domingo] = getWeekRangeStr(todayStr);
+                const [lunes, domingo] = getWeekRangeStr(financeRef);
                 return state.appointments.filter(a => a.date >= lunes && a.date <= domingo);
             } else if (state.financePeriod === 'mes') {
-                const [inicio, fin] = periodRangeStr('mes', todayStr);
+                const [inicio, fin] = periodRangeStr('mes', financeRef);
                 return state.appointments.filter(a => a.date >= inicio && a.date <= fin);
             } else if (state.financePeriod === 'personalizado') {
                 const [inicio, fin] = periodRangeStr('personalizado', todayStr);
@@ -2050,8 +2126,7 @@ window.printClinicalHistory = function() {
             state.financeCustomEnd = end;
             state.financePeriod = 'personalizado';
             updateFinancePeriodButtons();
-            const lbl = document.getElementById('finance-period-label');
-            if (lbl) lbl.innerText = 'Mostrando datos de: ' + formatDateRangeLabel(start, end);
+            refreshFinancePeriodLabel();
             updateStatsDashboard();
         };
 
@@ -2059,22 +2134,59 @@ window.printClinicalHistory = function() {
             ['todo', 'mes', 'semana', 'dia', 'personalizado'].forEach(p => {
                 const btn = document.getElementById('btn-fp-' + p);
                 if (!btn) return;
-                btn.className = p === state.financePeriod
-                    ? "px-3 py-1.5 bg-sage-600 text-white text-xs font-semibold rounded-lg shadow-sm transition"
-                    : "px-3 py-1.5 bg-graphite-100 hover:bg-graphite-200 text-graphite-600 text-xs font-semibold rounded-lg transition";
+                btn.classList.toggle('v23-period-active', p === state.financePeriod);
             });
+            const nav = document.querySelector('.v23-date-nav');
+            if (nav) nav.classList.toggle('v23-date-nav-disabled', ['todo','personalizado'].includes(state.financePeriod));
         }
+
+        function refreshFinancePeriodLabel() {
+            const lbl = document.getElementById('finance-period-label');
+            if (!lbl) return;
+            const ref = state.financeReferenceDate || todayStr;
+            if (state.financePeriod === 'todo') lbl.innerText = 'Todo el historial';
+            else if (state.financePeriod === 'dia') lbl.innerText = 'Día: ' + new Date(ref+'T00:00:00').toLocaleDateString('es-PE');
+            else if (state.financePeriod === 'semana') { const r=getWeekRangeStr(ref); lbl.innerText = 'Semana: ' + formatDateRangeLabel(r[0],r[1]); }
+            else if (state.financePeriod === 'mes') { const d=new Date(ref+'T00:00:00'); lbl.innerText = d.toLocaleDateString('es-PE',{month:'long',year:'numeric'}); }
+            else if (state.financePeriod === 'personalizado') lbl.innerText = 'Rango: ' + formatDateRangeLabel(state.financeCustomStart,state.financeCustomEnd);
+        }
+
+        window.setFinanceReferenceDate = function(value) {
+            if (!value) return;
+            state.financeReferenceDate = value;
+            refreshFinancePeriodLabel();
+            updateStatsDashboard();
+        };
+
+        window.shiftFinancePeriod = function(dir) {
+            if (state.financePeriod === 'todo' || state.financePeriod === 'personalizado') return;
+            const d = new Date((state.financeReferenceDate || todayStr)+'T00:00:00');
+            if (state.financePeriod === 'dia') d.setDate(d.getDate()+dir);
+            else if (state.financePeriod === 'semana') d.setDate(d.getDate()+dir*7);
+            else if (state.financePeriod === 'mes') d.setMonth(d.getMonth()+dir);
+            state.financeReferenceDate = horarioDateStr(d);
+            const input=document.getElementById('finance-reference-date'); if(input) input.value=state.financeReferenceDate;
+            refreshFinancePeriodLabel(); updateStatsDashboard();
+        };
+
+        window.goFinanceToday = function() {
+            state.financeReferenceDate = todayStr;
+            const input=document.getElementById('finance-reference-date'); if(input) input.value=todayStr;
+            refreshFinancePeriodLabel(); updateStatsDashboard();
+        };
 
         window.setFinancePeriod = function(period) {
             if (period === 'personalizado') {
+                state.financePeriod = 'personalizado';
+                updateFinancePeriodButtons();
                 showFinanceCustomRange();
+                refreshFinancePeriodLabel();
                 return;
             }
             state.financePeriod = period;
             updateFinancePeriodButtons();
-            const labels = { todo: 'Todo el tiempo', mes: 'Este mes', semana: 'Esta semana', dia: 'Hoy' };
-            const lbl = document.getElementById('finance-period-label');
-            if (lbl) lbl.innerText = 'Mostrando datos de: ' + labels[period];
+            const wrap=document.getElementById('finance-custom-range'); if(wrap) wrap.classList.add('hidden');
+            refreshFinancePeriodLabel();
             updateStatsDashboard();
         };
 
@@ -2121,7 +2233,7 @@ window.printClinicalHistory = function() {
             const fm = computeFinanceMetrics(financeApps);
 
             // Comparativo contra el periodo anterior equivalente
-            const prevRange = previousPeriodRangeStr(state.financePeriod, todayStr);
+            const prevRange = previousPeriodRangeStr(state.financePeriod, state.financeReferenceDate || todayStr);
             const fmPrev    = prevRange ? computeFinanceMetrics(appsInRange(prevRange)) : null;
 
             const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.innerText = txt; };
@@ -2693,9 +2805,9 @@ window.printClinicalHistory = function() {
             const apps = getFinanceAppointments().slice().sort((a,b) => (a.date + ' ' + (a.time||'')).localeCompare(b.date + ' ' + (b.time||'')));
             const fm = computeFinanceMetrics(apps);
             let periodLabel = 'Todo el tiempo';
-            if (state.financePeriod === 'dia') periodLabel = new Date(todayStr+'T00:00:00').toLocaleDateString('es-PE');
-            else if (state.financePeriod === 'semana') { const r=getWeekRangeStr(todayStr); periodLabel=`${r[0]} al ${r[1]}`; }
-            else if (state.financePeriod === 'mes') { const r=periodRangeStr('mes',todayStr); periodLabel=`${r[0]} al ${r[1]}`; }
+            if (state.financePeriod === 'dia') periodLabel = new Date((state.financeReferenceDate||todayStr)+'T00:00:00').toLocaleDateString('es-PE');
+            else if (state.financePeriod === 'semana') { const r=getWeekRangeStr(state.financeReferenceDate||todayStr); periodLabel=`${r[0]} al ${r[1]}`; }
+            else if (state.financePeriod === 'mes') { const r=periodRangeStr('mes',state.financeReferenceDate||todayStr); periodLabel=`${r[0]} al ${r[1]}`; }
             else if (state.financePeriod === 'personalizado') periodLabel=formatDateRangeLabel(state.financeCustomStart,state.financeCustomEnd);
 
             const rows = [
@@ -3092,6 +3204,14 @@ window.printClinicalHistory = function() {
             }, 300);
         };
 
+        window.renderDayManualBlocks = function () {
+            const root=document.getElementById('day-manual-blocks'); if(!root)return;
+            const date=document.getElementById('date-filter')?.value || todayStr;
+            const blocks=(state.manualBlocks||[]).filter(b=>b.date===date).sort((a,b)=>String(a.blockStart).localeCompare(String(b.blockStart)));
+            const wrap=document.getElementById('day-manual-blocks-wrap'); if(wrap) wrap.classList.toggle('hidden',!blocks.length);
+            root.innerHTML=blocks.map(b=>`<div class="v23-day-block"><svg class="v2-icon"><use href="#i-lock"></use></svg><div><strong>${b.blockStart} – ${b.blockEnd}</strong><span>${String(b.reason||'Bloqueo manual').replace(/[<>]/g,'')}</span></div><button onclick="deleteManualBlock('${b.id}')">Eliminar</button></div>`).join('');
+        };
+
         // ─── HORARIO SEMANAL (Modal "Revisar Horario") ─────────────────────────────
         const HORARIO_SLOTS = ['10:00','11:00','12:00','16:00','17:00','18:00','19:00'];
         const HORARIO_DAYS  = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -3113,12 +3233,15 @@ window.printClinicalHistory = function() {
             const baseDate = baseDateStr ? new Date(baseDateStr + 'T00:00:00') : new Date();
             state.horarioWeekStart = getMondayOf(baseDate);
             document.getElementById('modal-horario').classList.remove('hidden');
+            const bd=document.getElementById('manual-block-date'); if(bd && !bd.value) bd.value=horarioDateStr(baseDate);
             actualizarGridHorarios();
+            if (window.renderManualBlockList) window.renderManualBlockList();
         };
 
         window.goToCurrentHorarioWeek = function () {
             state.horarioWeekStart = getMondayOf(new Date());
             actualizarGridHorarios();
+            if (window.renderManualBlockList) window.renderManualBlockList();
         };
 
         window.shiftHorarioWeek = function (dir) {
@@ -3126,6 +3249,7 @@ window.printClinicalHistory = function() {
             d.setDate(d.getDate() + dir * 7);
             state.horarioWeekStart = d;
             actualizarGridHorarios();
+            if (window.renderManualBlockList) window.renderManualBlockList();
         };
 
         window.actualizarGridHorarios = function () {
@@ -3173,18 +3297,24 @@ window.printClinicalHistory = function() {
                     const isSabado = HORARIO_DAYS[dayIdx] === 'Sábado';
                     const isTardeNoche = ['16:00', '17:00', '18:00', '19:00'].includes(slot);
                     const bloqueadoPorDefecto = isSabado && isTardeNoche;
-                    const tieneCita = appts.some(a => a.date === dateStr && a.time && a.time.slice(0, 5) === slot);
+                    const citaSlot = appts.find(a => a.date === dateStr && a.time && a.time.slice(0, 5) === slot);
+                    const manualBlock = (state.manualBlocks || []).find(b => b.date === dateStr && rangesOverlap(slot, endLabel, b.blockStart, b.blockEnd));
 
-                    // Un slot ya pasado (fecha + hora de inicio anteriores al momento actual)
-                    // se considera "ocupado" aunque no tenga cita registrada.
+                    // Un slot ya pasado se muestra ocupado, pero se diferencia de un bloqueo manual.
                     const slotDateTime = new Date(d);
                     slotDateTime.setHours(h, m, 0, 0);
                     const yaPaso = slotDateTime.getTime() < now.getTime();
 
-                    const occupied = bloqueadoPorDefecto || tieneCita || yaPaso;
-                    html += occupied
-                        ? `<div class="flex items-center justify-center py-2.5 rounded-xl bg-rose-300 text-rose-800 font-extrabold text-[11px] uppercase tracking-wide">Ocupado</div>`
-                        : `<div class="flex items-center justify-center py-2.5 rounded-xl bg-emerald-100 text-emerald-700 font-extrabold text-[11px] uppercase tracking-wide">Libre</div>`;
+                    if (manualBlock) {
+                        const safeReason=String(manualBlock.reason||'Bloqueo manual').replace(/["<>]/g,'');
+                        html += `<div title="${safeReason}" class="v23-manual-slot"><span>Bloqueado</span><small>${manualBlock.blockStart}–${manualBlock.blockEnd}</small></div>`;
+                    } else if (citaSlot) {
+                        html += `<div title="${String(citaSlot.patientName||'Cita').replace(/["<>]/g,'')}" class="v23-appt-slot"><span>Ocupado</span><small>${String(citaSlot.patientName||'Cita').replace(/[<>]/g,'')}</small></div>`;
+                    } else if (bloqueadoPorDefecto || yaPaso) {
+                        html += `<div class="v23-unavailable-slot"><span>${bloqueadoPorDefecto?'No disponible':'Pasado'}</span></div>`;
+                    } else {
+                        html += `<div class="v23-free-slot"><span>Libre</span></div>`;
+                    }
                 });
             });
 
