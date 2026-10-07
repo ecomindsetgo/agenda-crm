@@ -1875,8 +1875,8 @@ window.printClinicalHistory = function() {
             const monthView = document.getElementById('citas-month-view');
             const btnDia    = document.getElementById('btn-view-dia');
             const btnMes    = document.getElementById('btn-view-mes');
-            const activeCls   = "v31-view-active";
-            const inactiveCls = "";
+            const activeCls   = "v34-tab v31-view-active";
+            const inactiveCls = "v34-tab";
 
             if (view === 'dia') {
                 dayView.classList.remove('hidden');

@@ -142,6 +142,5 @@ function init(){
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>{init(); setTimeout(init,300); setTimeout(init,1200);});
 else {init(); setTimeout(init,300); setTimeout(init,1200);} 
 
-const mo=new MutationObserver(()=>init());
-mo.observe(document.documentElement,{childList:true,subtree:true});
+// V3.4: se elimina el observador global para evitar ciclos de renderizado.
 })();

@@ -10,7 +10,7 @@
         }
 
         function setFilterStatus(status) {
-            ['todas','pendiente','completada','cancelada'].forEach(st => {
+            ['todas','pendiente','completada','no_asistio','cancelada'].forEach(st => {
                 document.getElementById('btn-f-' + st).className = st === status ? "v31-filter-active" : "";
             });
             // Puente limpio hacia el scope del módulo

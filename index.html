@@ -17,6 +17,7 @@
 </style>
     <link rel="stylesheet" href="v32.css?v=20261007-V32">
     <link rel="stylesheet" href="v33.css?v=20261007-V33">
+    <link rel="stylesheet" href="v34.css?v=20261007-V34">
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col pb-20 md:pb-6">
 <svg aria-hidden="true" class="v2-svg-sprite" width="0" height="0" style="position:absolute;overflow:hidden">
@@ -357,81 +358,86 @@
 
             <!-- SECCIÓN: CITAS · V3.1 -->
             <section id="sec-citas" class="hidden">
-                <div class="v31-agenda-shell">
-                    <div class="v31-agenda-hero">
-                        <div class="v31-agenda-hero-copy">
-                            <span class="v31-kicker">Agenda clínica</span>
-                            <h2>Tu jornada, en una sola vista</h2>
-                            <p>Organiza atenciones, disponibilidad y seguimiento sin salir del calendario.</p>
+                <div class="v34-agenda-page">
+                    <div class="v34-page-head">
+                        <div class="v34-page-title">
+                            <span class="v34-page-icon"><svg class="v2-icon"><use href="#i-calendar"></use></svg></span>
+                            <div>
+                                <span class="v34-eyebrow">Agenda clínica</span>
+                                <h2>Planificación de atenciones</h2>
+                                <p>Gestiona citas, bloqueos y disponibilidad desde una sola vista operativa.</p>
+                            </div>
                         </div>
-                        <div class="v31-agenda-hero-actions">
-                            <button onclick="openHorarioModal()" class="v31-btn v31-btn-soft"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Disponibilidad</span></button>
-                            <button onclick="openAppointmentModal()" class="v31-btn v31-btn-primary"><svg class="v2-icon"><use href="#i-plus"></use></svg><span>Nueva cita</span></button>
+                        <div class="v34-page-actions">
+                            <button onclick="openHorarioModal()" class="v34-btn secondary"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Bloquear horario</span></button>
+                            <button onclick="openAppointmentModal()" class="v34-btn primary"><svg class="v2-icon"><use href="#i-plus"></use></svg><span>Nueva cita</span></button>
                         </div>
                     </div>
 
-                    <div class="v31-agenda-commandbar">
-                        <div class="v31-view-switch">
-                            <button onclick="setCitasView('dia')" id="btn-view-dia" class="v31-view-active"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Día</span></button>
-                            <button onclick="setCitasView('mes')" id="btn-view-mes"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Mes</span></button>
+                    <div class="v34-agenda-toolbar">
+                        <div class="v34-view-tabs">
+                            <button onclick="setCitasView('dia')" id="btn-view-dia" class="v34-tab active"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Día</span></button>
+                            <button onclick="setCitasView('mes')" id="btn-view-mes" class="v34-tab"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Mes</span></button>
                         </div>
-                        <div class="v31-date-control">
+                        <div class="v34-date-nav">
                             <button onclick="shiftDate(-1)" aria-label="Día anterior"><svg class="v2-icon"><use href="#i-chevron-left"></use></svg></button>
                             <input type="date" id="date-filter" onchange="renderAppointments(); window.updateStatsDashboard && window.updateStatsDashboard();">
                             <button onclick="shiftDate(1)" aria-label="Día siguiente"><svg class="v2-icon"><use href="#i-chevron-right"></use></svg></button>
-                            <button onclick="goToToday()" class="v31-today">Hoy</button>
+                            <button onclick="goToToday()" class="v34-today">Hoy</button>
                         </div>
-                        <label class="v31-searchbox">
+                        <label class="v34-search">
                             <svg class="v2-icon"><use href="#i-search"></use></svg>
-                            <input type="text" id="appointment-search" oninput="renderAppointments()" placeholder="Buscar paciente o nota">
+                            <input type="text" id="appointment-search" oninput="renderAppointments()" placeholder="Buscar paciente, nota o modalidad">
                         </label>
                     </div>
 
-                    <div class="v31-agenda-kpis">
-                        <div><span>Citas del día</span><strong id="stat-citas-hoy">0</strong><small id="stat-citas-hoy-label">Hoy</small></div>
-                        <div><span>Por atender</span><strong id="stat-citas-pendientes">0</strong><small>Pendientes</small></div>
-                        <div><span>Completadas</span><strong id="stat-citas-completas">0</strong><small>Asistidas</small></div>
-                        <div><span>Proyectado</span><strong id="stat-citas-ingresos">S/ 0.00</strong><small id="stat-citas-ingresos-label">Hoy</small></div>
-                        <div><span>Cobrado</span><strong id="stat-citas-ingresos-real">S/ 0.00</strong><small id="stat-citas-ingresos-real-label">Hoy</small></div>
+                    <div class="v34-agenda-kpis">
+                        <div class="v34-stat"><span class="v34-stat-ico"><svg class="v2-icon"><use href="#i-calendar"></use></svg></span><div><small>Citas del día</small><strong id="stat-citas-hoy">0</strong><em id="stat-citas-hoy-label">Hoy</em></div></div>
+                        <div class="v34-stat"><span class="v34-stat-ico amber"><svg class="v2-icon"><use href="#i-clock"></use></svg></span><div><small>Pendientes</small><strong id="stat-citas-pendientes">0</strong><em>Por atender</em></div></div>
+                        <div class="v34-stat"><span class="v34-stat-ico green"><svg class="v2-icon"><use href="#i-check"></use></svg></span><div><small>Completadas</small><strong id="stat-citas-completas">0</strong><em>Atendidas</em></div></div>
+                        <div class="v34-stat"><span class="v34-stat-ico"><svg class="v2-icon"><use href="#i-wallet"></use></svg></span><div><small>Proyectado</small><strong id="stat-citas-ingresos">S/ 0.00</strong><em id="stat-citas-ingresos-label">Hoy</em></div></div>
+                        <div class="v34-stat"><span class="v34-stat-ico green"><svg class="v2-icon"><use href="#i-money"></use></svg></span><div><small>Cobrado</small><strong id="stat-citas-ingresos-real">S/ 0.00</strong><em id="stat-citas-ingresos-real-label">Hoy</em></div></div>
                     </div>
 
-                    <div id="citas-day-view" class="v31-day-layout">
-                        <aside class="v31-agenda-sidebar">
-                            <div class="v31-side-card">
-                                <div class="v31-side-title"><svg class="v2-icon"><use href="#i-filter"></use></svg><span>Estado</span></div>
-                                <div class="v31-filter-stack">
-                                    <button onclick="setFilterStatus('todas')" id="btn-f-todas" class="v31-filter-active">Todas</button>
-                                    <button onclick="setFilterStatus('pendiente')" id="btn-f-pendiente">Agendadas</button>
-                                    <button onclick="setFilterStatus('completada')" id="btn-f-completada">Completadas</button>
-                                    <button onclick="setFilterStatus('cancelada')" id="btn-f-cancelada">Canceladas</button>
+                    <div id="citas-day-view" class="v34-schedule-layout">
+                        <aside class="v34-schedule-aside">
+                            <div class="v34-filter-card">
+                                <div class="v34-card-title"><svg class="v2-icon"><use href="#i-filter"></use></svg><span>Filtrar agenda</span></div>
+                                <div class="v34-filter-list">
+                                    <button onclick="setFilterStatus('todas')" id="btn-f-todas" class="active"><span class="dot all"></span>Todas</button>
+                                    <button onclick="setFilterStatus('pendiente')" id="btn-f-pendiente"><span class="dot pending"></span>Pendientes</button>
+                                    <button onclick="setFilterStatus('completada')" id="btn-f-completada"><span class="dot done"></span>Completadas</button>
+                                    <button onclick="setFilterStatus('no_asistio')" id="btn-f-no_asistio"><span class="dot no-show"></span>No asistió</button>
+                                    <button onclick="setFilterStatus('cancelada')" id="btn-f-cancelada"><span class="dot cancel"></span>Canceladas</button>
                                 </div>
                             </div>
-                            <div class="v31-side-card">
-                                <div class="v31-side-title"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Disponibilidad</span></div>
-                                <p>Revisa o bloquea rangos sin mezclarlo con las citas.</p>
-                                <button onclick="openHorarioModal()" id="btn-revisar-horario" class="v31-side-action">Administrar horario <svg class="v2-icon"><use href="#i-arrow"></use></svg></button>
+                            <div class="v34-filter-card">
+                                <div class="v34-card-title"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Disponibilidad</span></div>
+                                <p>Gestiona rangos ocupados y bloqueos sin crear citas ficticias.</p>
+                                <button onclick="openHorarioModal()" id="btn-revisar-horario" class="v34-inline-action">Administrar horario <svg class="v2-icon"><use href="#i-arrow"></use></svg></button>
                             </div>
-                            <div id="day-manual-blocks-wrap" class="hidden v31-side-card v31-blocks-card">
-                                <div class="v31-side-title"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Bloqueos del día</span></div>
+                            <div id="day-manual-blocks-wrap" class="hidden v34-filter-card">
+                                <div class="v34-card-title"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Bloqueos del día</span></div>
                                 <div id="day-manual-blocks" class="v23-day-blocks"></div>
                             </div>
                         </aside>
-                        <div class="v31-agenda-main">
-                            <div class="v31-list-head">
-                                <div><span class="v31-kicker">Agenda del día</span><h3>Atenciones programadas</h3></div>
-                                <button onclick="openAppointmentModal()" class="v31-icon-action" title="Nueva cita"><svg class="v2-icon"><use href="#i-plus"></use></svg></button>
+                        <div class="v34-schedule-board">
+                            <div class="v34-board-head">
+                                <div><span class="v34-eyebrow">Jornada seleccionada</span><h3>Atenciones programadas</h3></div>
+                                <button onclick="openAppointmentModal()" class="v34-icon-btn" title="Nueva cita"><svg class="v2-icon"><use href="#i-plus"></use></svg></button>
                             </div>
-                            <div id="appointments-list" class="v31-appointments-list"></div>
+                            <div class="v34-time-guide"><span>Hora</span><span>Atención / estado / pago</span></div>
+                            <div id="appointments-list" class="v31-appointments-list v34-appointments-list"></div>
                         </div>
                     </div>
 
-                    <div id="citas-month-view" class="hidden v31-month-view">
-                        <div class="v31-month-toolbar">
+                    <div id="citas-month-view" class="hidden v34-month-view">
+                        <div class="v34-month-head">
                             <button onclick="shiftMonth(-1)" aria-label="Mes anterior"><svg class="v2-icon"><use href="#i-chevron-left"></use></svg></button>
-                            <div><span class="v31-kicker">Vista mensual</span><strong id="month-view-label"></strong></div>
+                            <div><span class="v34-eyebrow">Vista mensual</span><strong id="month-view-label"></strong></div>
                             <button onclick="shiftMonth(1)" aria-label="Mes siguiente"><svg class="v2-icon"><use href="#i-chevron-right"></use></svg></button>
                         </div>
-                        <div class="v31-month-summary">
+                        <div class="v34-month-summary">
                             <span>Total <strong id="month-view-total">0</strong></span>
                             <span>Completadas <strong id="month-view-completed">0</strong></span>
                             <span>Recaudado <strong id="month-view-revenue">S/ 0.00</strong></span>
@@ -1675,40 +1681,48 @@
 
     <!-- V2: FICHA 360 DEL PACIENTE -->
     <div id="patient-360-modal" class="hidden fixed inset-0 z-[65] items-center justify-center bg-slate-950/55 backdrop-blur-sm p-3 md:p-5 no-print">
-        <div class="v2-360-shell w-full max-w-5xl rounded-3xl shadow-2xl overflow-hidden max-h-[94vh] flex flex-col">
-            <div class="v2-360-head p-5 md:p-6 flex items-start justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-2 flex-wrap"><h2 id="p360-name" class="text-xl md:text-2xl font-black"></h2><span id="p360-status" class="text-[10px] font-extrabold bg-white/15 border border-white/20 rounded-full px-2.5 py-1"></span></div>
-                    <p class="text-xs text-white/75 mt-1">Ficha integral del paciente · vista administrativa y clínica</p>
-                </div>
-                <button onclick="closePatient360()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 font-bold">✕</button>
-            </div>
-            <div class="p-4 md:p-6 overflow-y-auto space-y-5">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="v2-360-card"><div class="v2-360-label">Teléfono</div><div id="p360-phone" class="v2-360-value"></div></div>
-                    <div class="v2-360-card"><div class="v2-360-label">Nacimiento</div><div id="p360-birth" class="v2-360-value"></div></div>
-                    <div class="v2-360-card"><div class="v2-360-label">Sesiones completadas</div><div id="p360-sessions" class="v2-360-value"></div></div>
-                    <div class="v2-360-card"><div class="v2-360-label">Saldo pendiente</div><div id="p360-debt" class="v2-360-value"></div></div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div class="v2-360-card"><div class="v2-360-label">Última atención</div><div id="p360-last" class="v2-360-value"></div></div>
-                    <div class="v2-360-card"><div class="v2-360-label">Próxima atención</div><div id="p360-next" class="v2-360-value"></div></div>
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                    <div class="v2-panel p-4">
-                        <div class="flex items-center justify-between gap-3 mb-3"><div><h3 class="v2-section-title">Actividad reciente</h3><p class="v2-section-hint">Citas y eventos del paciente.</p></div></div>
-                        <div id="p360-timeline" class="v2-timeline"></div>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="v2-panel p-4"><h3 class="v2-section-title">Gestión clínica</h3><div class="grid grid-cols-2 gap-3 mt-3"><div class="v2-360-card"><div class="v2-360-label">Historia</div><div id="p360-clinical" class="v2-360-value"></div></div><div class="v2-360-card"><div class="v2-360-label">Evolución</div><div id="p360-notes" class="v2-360-value"></div></div></div></div>
-                        <div class="v2-panel p-4"><h3 class="v2-section-title">Paquetes</h3><div id="p360-packages" class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3"></div></div>
+        <div class="v34-p360-shell w-full max-w-6xl max-h-[94vh] flex flex-col overflow-hidden">
+            <div class="v34-p360-head">
+                <div class="v34-p360-identity">
+                    <div class="v34-p360-avatar"><svg class="v2-icon"><use href="#i-users"></use></svg></div>
+                    <div>
+                        <div class="v34-p360-name-row"><h2 id="p360-name"></h2><span id="p360-status"></span></div>
+                        <p>Ficha integral del paciente · información clínica y administrativa</p>
                     </div>
                 </div>
+                <button onclick="closePatient360()" class="v34-p360-close" aria-label="Cerrar"><svg class="v2-icon"><use href="#i-x"></use></svg></button>
             </div>
-            <div class="bg-white border-t border-slate-200 p-4 flex flex-wrap justify-end gap-2">
-                <button id="p360-edit" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-edit"></use></svg>Editar datos</button>
-                <button id="p360-open-history" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-calendar"></use></svg>Historial</button>
-                <button id="p360-open-clinical" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-clinical"></use></svg>Historia clínica</button>
+            <div class="v34-p360-body">
+                <aside class="v34-p360-side">
+                    <div class="v34-p360-side-label">Información principal</div>
+                    <div class="v34-p360-side-item"><span class="ico"><svg class="v2-icon"><use href="#i-message"></use></svg></span><div><small>Teléfono</small><strong id="p360-phone"></strong></div></div>
+                    <div class="v34-p360-side-item"><span class="ico"><svg class="v2-icon"><use href="#i-calendar"></use></svg></span><div><small>Nacimiento</small><strong id="p360-birth"></strong></div></div>
+                    <div class="v34-p360-side-item"><span class="ico"><svg class="v2-icon"><use href="#i-check"></use></svg></span><div><small>Sesiones completadas</small><strong id="p360-sessions"></strong></div></div>
+                    <div class="v34-p360-side-item"><span class="ico warn"><svg class="v2-icon"><use href="#i-money"></use></svg></span><div><small>Saldo pendiente</small><strong id="p360-debt"></strong></div></div>
+                    <div class="v34-p360-divider"></div>
+                    <div class="v34-p360-side-label">Acciones</div>
+                    <button id="p360-edit" class="v34-p360-action"><svg class="v2-icon"><use href="#i-edit"></use></svg><span>Editar datos</span></button>
+                    <button id="p360-open-history" class="v34-p360-action"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Historial</span></button>
+                    <button id="p360-open-clinical" class="v34-p360-action primary"><svg class="v2-icon"><use href="#i-clinical"></use></svg><span>Historia clínica</span></button>
+                </aside>
+                <main class="v34-p360-main">
+                    <div class="v34-p360-kpis">
+                        <div class="v34-p360-kpi"><span>Última atención</span><strong id="p360-last"></strong></div>
+                        <div class="v34-p360-kpi"><span>Próxima atención</span><strong id="p360-next"></strong></div>
+                        <div class="v34-p360-kpi"><span>Historia clínica</span><strong id="p360-clinical"></strong></div>
+                        <div class="v34-p360-kpi"><span>Evolución</span><strong id="p360-notes"></strong></div>
+                    </div>
+                    <div class="v34-p360-grid">
+                        <section class="v34-p360-card activity">
+                            <div class="v34-p360-card-head"><div><span class="v34-eyebrow">Seguimiento</span><h3>Actividad reciente</h3></div><span class="v34-p360-card-ico"><svg class="v2-icon"><use href="#i-calendar"></use></svg></span></div>
+                            <div id="p360-timeline" class="v2-timeline v34-p360-timeline"></div>
+                        </section>
+                        <section class="v34-p360-card">
+                            <div class="v34-p360-card-head"><div><span class="v34-eyebrow">Tratamiento</span><h3>Paquetes de sesiones</h3></div><span class="v34-p360-card-ico"><svg class="v2-icon"><use href="#i-wallet"></use></svg></span></div>
+                            <div id="p360-packages" class="v34-p360-packages"></div>
+                        </section>
+                    </div>
+                </main>
             </div>
         </div>
     </div>
@@ -1723,12 +1737,12 @@
 
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script type="module" src="app.js?v=20261007-V32"></script>
+    <script type="module" src="app.js?v=20261007-V34"></script>
     <script src="assistant.js?v=20261001-3"></script>
-    <script src="ui.js?v=20261007-V32"></script>
+    <script src="ui.js?v=20261007-V34"></script>
     <script src="v2.js?v=20261007-V23"></script>
     <script src="v3.js?v=20261007-V3"></script>
-    <script src="v32.js?v=20261007-V32"></script>
-    <script src="v33.js?v=20261007-V33"></script>
+    <script src="v32.js?v=20261007-V34"></script>
+    <script src="v33.js?v=20261007-V34"></script>
 </body>
 </html>
