@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Psicología Pro V3 · Gestión Integral</title>
+    <title>Psicología Pro V3.1 · Gestión Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="v2.css?v=20261006-1">
     <link rel="stylesheet" href="v23.css?v=20261007-1">
     <link rel="stylesheet" href="v3.css?v=20261007-1">
+    <link rel="stylesheet" href="v31.css?v=20261007-2">
 <style>
 .assistant-chip{padding:.45rem .7rem;border:1px solid #e2e8f0;background:#fff;color:#475569;border-radius:.7rem;font-size:.72rem;font-weight:700;transition:.15s}.assistant-chip:hover{background:#f5f3ff;border-color:#c4b5fd;color:#6d28d9}.assistant-result{border:1px solid #e2e8f0;border-radius:1rem;overflow:hidden}.assistant-result table{width:100%;font-size:.75rem;border-collapse:collapse}.assistant-result th{background:#f8fafc;text-align:left;padding:.55rem;color:#64748b;font-weight:800}.assistant-result td{padding:.55rem;border-top:1px solid #f1f5f9;color:#334155}.assistant-kpi{background:#f8fafc;border:1px solid #e2e8f0;border-radius:.8rem;padding:.65rem}.assistant-kpi strong{display:block;font-size:1rem;color:#0f172a}.assistant-kpi span{font-size:.65rem;color:#64748b}.assistant-loading{display:inline-flex;gap:4px}.assistant-loading i{width:6px;height:6px;border-radius:50%;background:#8b5cf6;animation:assistantPulse 1s infinite}.assistant-loading i:nth-child(2){animation-delay:.15s}.assistant-loading i:nth-child(3){animation-delay:.3s}@keyframes assistantPulse{0%,80%,100%{opacity:.25;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
 </style>
@@ -41,6 +42,10 @@
   <symbol id="i-chevron-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
   <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></symbol>
+  <symbol id="i-message" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/><path d="M8 9h8M8 13h5"/></symbol>
+  <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="6" width="13" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3z"/></symbol>
+  <symbol id="i-location" viewBox="0 0 24 24"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-printer" viewBox="0 0 24 24"><path d="M6 9V3h12v6"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M7 15h10v6H7zM17 12h.01"/></symbol>
 </svg>
 
 
@@ -221,7 +226,7 @@
                 <div class="flex items-center gap-3">
                     <img src="logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga" class="v2-brand-logo">
                     <div class="hidden sm:block">
-                        <div class="v2-brand-title">Psicología Pro <span class="text-[9px] px-2 py-0.5 rounded-full bg-[#eaf5f4] text-[#356b69] ml-1">V3</span></div>
+                        <div class="v2-brand-title">Psicología Pro <span class="text-[9px] px-2 py-0.5 rounded-full bg-[#eaf5f4] text-[#356b69] ml-1">V3.1</span></div>
                         <p class="v2-brand-subtitle flex items-center gap-1.5 mt-1">
                             <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block" id="sync-indicator-dot"></span>
                             <span id="sync-indicator-text">Gestión clínica conectada</span>
@@ -232,9 +237,6 @@
                     <span id="current-date-lbl" class="text-sm bg-indigo-950/40 px-3.5 py-1.5 rounded-lg border border-indigo-800 font-medium"></span>
                     <button onclick="openPrintModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-3.5 py-1.5 rounded-lg shadow-sm transition flex items-center gap-2 text-sm" title="Imprimir Reporte">
                         <svg class="v2-icon"><use href="#i-report"></use></svg><span class="hidden md:inline">Reportes</span>
-                    </button>
-                    <button onclick="openAssistantModal()" class="bg-violet-600 hover:bg-violet-500 border border-violet-400/40 px-3 py-1.5 rounded-lg transition flex items-center gap-2 text-sm font-semibold" title="Asistente virtual IA">
-                        <svg class="v2-icon"><use href="#i-spark"></use></svg><span class="hidden md:inline">Asistente IA</span>
                     </button>
                     <button onclick="openProfileModal()" class="bg-indigo-700 hover:bg-indigo-600 border border-indigo-500/50 p-2 rounded-lg transition flex items-center gap-2 text-sm font-medium" title="Mi Perfil">
                         <svg class="v2-icon"><use href="#i-users"></use></svg><span id="header-user-name" class="hidden md:inline max-w-[120px] truncate text-xs"></span>
@@ -260,7 +262,7 @@
                 <button data-v2-nav="alertas" onclick="switchTab('alertas')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-bell"></use></svg><span>Alertas</span></button>
                 <button onclick="openPrintModal()" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-report"></use></svg><span>Reportes</span></button>
                 <div class="v2-sidebar-label">Inteligencia</div>
-                <button onclick="openAssistantModal()" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-spark"></use></svg><span>Asistente IA</span></button>
+                <button onclick="openAssistantModal()" class="py-3 px-3 text-sm flex items-center gap-2"><span>Asistente IA</span></button>
             </div>
         </nav>
 
@@ -278,7 +280,7 @@
                         <div class="grid grid-cols-2 sm:flex gap-2">
                             <button onclick="openAppointmentModal()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-plus"></use></svg> Nueva cita</button>
                             <button onclick="openPatientModal()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-plus"></use></svg> Nuevo paciente</button>
-                            <button onclick="openAssistantModal()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-spark"></use></svg> Consultar IA</button>
+                            <button onclick="openAssistantModal()" class="v2-quick-btn">Consultar IA</button>
                             <button onclick="exportAgendaBackup()" class="v2-quick-btn"><svg class="v2-icon"><use href="#i-download"></use></svg> Respaldo</button>
                         </div>
                     </div>
@@ -317,7 +319,7 @@
                         <span class="v2-feature-icon"><svg class="v2-icon"><use href="#i-wallet"></use></svg></span><h3 class="v2-section-title mt-3">Control financiero</h3><p class="v2-section-hint mt-1">Facturación, cobros, pendientes, proyección y análisis del consultorio.</p>
                     </button>
                     <button onclick="openAssistantModal()" class="v2-panel p-5 text-left hover:-translate-y-0.5 transition">
-                        <span class="v2-feature-icon"><svg class="v2-icon"><use href="#i-spark"></use></svg></span><h3 class="v2-section-title mt-3">Asistente inteligente</h3><p class="v2-section-hint mt-1">Consulta agenda, pacientes y métricas administrativas por texto o voz.</p>
+                        <h3 class="v2-section-title mt-1">Asistente inteligente</h3><p class="v2-section-hint mt-1">Consulta agenda, pacientes y métricas administrativas por texto o voz.</p>
                     </button>
                 </div>
             </section>
@@ -351,111 +353,89 @@
                 <div id="v2-alert-center" class="grid grid-cols-1 xl:grid-cols-2 gap-4"></div>
             </section>
 
-            <!-- SECCIÓN: CITAS -->
-            <section id="sec-citas" class="space-y-4 hidden">
-                <div class="v23-page-banner">
-                    <div><span class="v2-eyebrow">Operación clínica</span><h2>Agenda y disponibilidad</h2><p>Gestiona citas, estados de atención y rangos ocupados desde una sola vista.</p></div>
-                    <div class="v23-page-actions"><button onclick="openHorarioModal()" class="v2-secondary-btn"><svg class="v2-icon"><use href="#i-lock"></use></svg>Disponibilidad</button><button onclick="openAppointmentModal()" class="v2-primary-btn"><svg class="v2-icon"><use href="#i-plus"></use></svg>Nueva cita</button></div>
-                </div>
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Citas Hoy</span>
-                        <div class="flex items-baseline justify-between mt-1">
-                            <span id="stat-citas-hoy" class="text-3xl font-extrabold text-indigo-600">0</span>
-                            <span id="stat-citas-hoy-label" class="text-xs text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-md font-medium">Hoy</span>
+            <!-- SECCIÓN: CITAS · V3.1 -->
+            <section id="sec-citas" class="hidden">
+                <div class="v31-agenda-shell">
+                    <div class="v31-agenda-hero">
+                        <div class="v31-agenda-hero-copy">
+                            <span class="v31-kicker">Agenda clínica</span>
+                            <h2>Tu jornada, en una sola vista</h2>
+                            <p>Organiza atenciones, disponibilidad y seguimiento sin salir del calendario.</p>
+                        </div>
+                        <div class="v31-agenda-hero-actions">
+                            <button onclick="openHorarioModal()" class="v31-btn v31-btn-soft"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Disponibilidad</span></button>
+                            <button onclick="openAppointmentModal()" class="v31-btn v31-btn-primary"><svg class="v2-icon"><use href="#i-plus"></use></svg><span>Nueva cita</span></button>
                         </div>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pendientes</span>
-                        <div class="flex items-baseline justify-between mt-1">
-                            <span id="stat-citas-pendientes" class="text-3xl font-extrabold text-amber-500">0</span>
-                            <span class="text-xs text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-md font-medium">Por Atender</span>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Completadas</span>
-                        <div class="flex items-baseline justify-between mt-1">
-                            <span id="stat-citas-completas" class="text-3xl font-extrabold text-emerald-500">0</span>
-                            <span class="text-xs text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md font-medium">Asistidas</span>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Recaudación Estimada</span>
-                        <div class="flex items-baseline justify-between mt-1">
-                            <span id="stat-citas-ingresos" class="text-2xl font-extrabold text-slate-800">S/ 0.00</span>
-                            <span id="stat-citas-ingresos-label" class="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md font-medium">Hoy</span>
-                        </div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Recaudación Real</span>
-                        <div class="flex items-baseline justify-between mt-1">
-                            <span id="stat-citas-ingresos-real" class="text-2xl font-extrabold text-emerald-600">S/ 0.00</span>
-                            <span id="stat-citas-ingresos-real-label" class="text-xs text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-md font-medium">Hoy</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Toggle Vista Día / Vista Mes -->
-                <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-100 flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold text-slate-400 uppercase mr-1">Vista:</span>
-                    <button onclick="setCitasView('dia')" id="btn-view-dia" class="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg shadow-sm transition flex items-center gap-1.5"><svg class="v2-icon"><use href="#i-calendar"></use></svg>Día</button>
-                    <button onclick="setCitasView('mes')" id="btn-view-mes" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition flex items-center gap-1.5"><svg class="v2-icon"><use href="#i-calendar"></use></svg>Mes</button>
-                    <button onclick="openHorarioModal()" id="btn-revisar-horario" class="ml-auto px-3 py-1.5 bg-orange-100 hover:bg-orange-200 text-orange-700 text-xs font-bold rounded-lg transition flex items-center gap-1.5">
-                        <svg class="v2-icon"><use href="#i-lock"></use></svg> Disponibilidad
-                    </button>
-                </div>
+                    <div class="v31-agenda-commandbar">
+                        <div class="v31-view-switch">
+                            <button onclick="setCitasView('dia')" id="btn-view-dia" class="v31-view-active"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Día</span></button>
+                            <button onclick="setCitasView('mes')" id="btn-view-mes"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Mes</span></button>
+                        </div>
+                        <div class="v31-date-control">
+                            <button onclick="shiftDate(-1)" aria-label="Día anterior"><svg class="v2-icon"><use href="#i-chevron-left"></use></svg></button>
+                            <input type="date" id="date-filter" onchange="renderAppointments(); window.updateStatsDashboard && window.updateStatsDashboard();">
+                            <button onclick="shiftDate(1)" aria-label="Día siguiente"><svg class="v2-icon"><use href="#i-chevron-right"></use></svg></button>
+                            <button onclick="goToToday()" class="v31-today">Hoy</button>
+                        </div>
+                        <label class="v31-searchbox">
+                            <svg class="v2-icon"><use href="#i-search"></use></svg>
+                            <input type="text" id="appointment-search" oninput="renderAppointments()" placeholder="Buscar paciente o nota">
+                        </label>
+                    </div>
 
-                <!-- VISTA DIARIA -->
-                <div id="citas-day-view" class="space-y-4">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-3">
-                        <div class="flex flex-col md:flex-row gap-3">
-                            <div class="relative flex-grow">
-                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 pointer-events-none"><svg class="v2-icon"><use href="#i-search"></use></svg></span>
-                                <input type="text" id="appointment-search" oninput="renderAppointments()" placeholder="Buscar paciente por nombre o notas..."
-                                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all">
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl p-1">
-                                    <button onclick="shiftDate(-1)" class="px-2.5 py-1.5 text-slate-600 hover:bg-white rounded-lg transition-all text-xs font-semibold">◀ Anterior</button>
-                                    <input type="date" id="date-filter" onchange="renderAppointments(); window.updateStatsDashboard && window.updateStatsDashboard();" class="bg-transparent border-none text-sm font-semibold text-slate-700 focus:outline-none px-2 py-1">
-                                    <button onclick="shiftDate(1)" class="px-2.5 py-1.5 text-slate-600 hover:bg-white rounded-lg transition-all text-xs font-semibold">Siguiente ▶</button>
+                    <div class="v31-agenda-kpis">
+                        <div><span>Citas del día</span><strong id="stat-citas-hoy">0</strong><small id="stat-citas-hoy-label">Hoy</small></div>
+                        <div><span>Por atender</span><strong id="stat-citas-pendientes">0</strong><small>Pendientes</small></div>
+                        <div><span>Completadas</span><strong id="stat-citas-completas">0</strong><small>Asistidas</small></div>
+                        <div><span>Proyectado</span><strong id="stat-citas-ingresos">S/ 0.00</strong><small id="stat-citas-ingresos-label">Hoy</small></div>
+                        <div><span>Cobrado</span><strong id="stat-citas-ingresos-real">S/ 0.00</strong><small id="stat-citas-ingresos-real-label">Hoy</small></div>
+                    </div>
+
+                    <div id="citas-day-view" class="v31-day-layout">
+                        <aside class="v31-agenda-sidebar">
+                            <div class="v31-side-card">
+                                <div class="v31-side-title"><svg class="v2-icon"><use href="#i-filter"></use></svg><span>Estado</span></div>
+                                <div class="v31-filter-stack">
+                                    <button onclick="setFilterStatus('todas')" id="btn-f-todas" class="v31-filter-active">Todas</button>
+                                    <button onclick="setFilterStatus('pendiente')" id="btn-f-pendiente">Agendadas</button>
+                                    <button onclick="setFilterStatus('completada')" id="btn-f-completada">Completadas</button>
+                                    <button onclick="setFilterStatus('cancelada')" id="btn-f-cancelada">Canceladas</button>
                                 </div>
-                                <button onclick="goToToday()" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold px-3.5 py-2.5 rounded-xl text-xs transition">Hoy</button>
                             </div>
-                        </div>
-
-                        <div class="flex items-center gap-2 border-t border-slate-100 pt-3 flex-wrap">
-                            <span class="text-xs font-bold text-slate-400 uppercase mr-2">Filtrar Estado:</span>
-                            <button onclick="setFilterStatus('todas')" id="btn-f-todas" class="px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-lg shadow-sm transition">Todas</button>
-                            <button onclick="setFilterStatus('pendiente')" id="btn-f-pendiente" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">Pendientes</button>
-                            <button onclick="setFilterStatus('completada')" id="btn-f-completada" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">Completadas</button>
-                            <button onclick="setFilterStatus('cancelada')" id="btn-f-cancelada" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">Canceladas</button>
-                        </div>
-                    </div>
-
-                    <div id="day-manual-blocks-wrap" class="hidden v23-day-blocks-wrap">
-                        <div class="v23-day-blocks-head"><div><svg class="v2-icon"><use href="#i-lock"></use></svg><strong>Rangos bloqueados manualmente</strong></div><button onclick="openHorarioModal()">Administrar bloqueos</button></div>
-                        <div id="day-manual-blocks" class="v23-day-blocks"></div>
-                    </div>
-                    <div id="appointments-list" class="space-y-3"></div>
-                </div>
-
-                <!-- VISTA MENSUAL -->
-                <div id="citas-month-view" class="space-y-4 hidden">
-                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-3">
-                        <div class="flex items-center gap-2">
-                            <button onclick="shiftMonth(-1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold transition">◀ Mes Anterior</button>
-                            <span id="month-view-label" class="text-sm font-bold text-slate-700 px-2 min-w-[140px] text-center"></span>
-                            <button onclick="shiftMonth(1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold transition">Mes Siguiente ▶</button>
-                        </div>
-                        <div class="flex items-center gap-3 text-xs font-semibold text-slate-500 flex-wrap justify-center">
-                            <span>Total: <span id="month-view-total" class="text-indigo-600 font-bold">0</span></span>
-                            <span>Completadas: <span id="month-view-completed" class="text-emerald-600 font-bold">0</span></span>
-                            <span>Recaudado: <span id="month-view-revenue" class="text-slate-800 font-bold">S/ 0.00</span></span>
+                            <div class="v31-side-card">
+                                <div class="v31-side-title"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Disponibilidad</span></div>
+                                <p>Revisa o bloquea rangos sin mezclarlo con las citas.</p>
+                                <button onclick="openHorarioModal()" id="btn-revisar-horario" class="v31-side-action">Administrar horario <svg class="v2-icon"><use href="#i-arrow"></use></svg></button>
+                            </div>
+                            <div id="day-manual-blocks-wrap" class="hidden v31-side-card v31-blocks-card">
+                                <div class="v31-side-title"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Bloqueos del día</span></div>
+                                <div id="day-manual-blocks" class="v23-day-blocks"></div>
+                            </div>
+                        </aside>
+                        <div class="v31-agenda-main">
+                            <div class="v31-list-head">
+                                <div><span class="v31-kicker">Agenda del día</span><h3>Atenciones programadas</h3></div>
+                                <button onclick="openAppointmentModal()" class="v31-icon-action" title="Nueva cita"><svg class="v2-icon"><use href="#i-plus"></use></svg></button>
+                            </div>
+                            <div id="appointments-list" class="v31-appointments-list"></div>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-400 px-1">Toca cualquier día para ver el detalle en la vista diaria.</p>
-                    <div id="month-view-list" class="space-y-3"></div>
+
+                    <div id="citas-month-view" class="hidden v31-month-view">
+                        <div class="v31-month-toolbar">
+                            <button onclick="shiftMonth(-1)" aria-label="Mes anterior"><svg class="v2-icon"><use href="#i-chevron-left"></use></svg></button>
+                            <div><span class="v31-kicker">Vista mensual</span><strong id="month-view-label"></strong></div>
+                            <button onclick="shiftMonth(1)" aria-label="Mes siguiente"><svg class="v2-icon"><use href="#i-chevron-right"></use></svg></button>
+                        </div>
+                        <div class="v31-month-summary">
+                            <span>Total <strong id="month-view-total">0</strong></span>
+                            <span>Completadas <strong id="month-view-completed">0</strong></span>
+                            <span>Recaudado <strong id="month-view-revenue">S/ 0.00</strong></span>
+                        </div>
+                        <div id="month-view-list" class="v31-month-list"></div>
+                    </div>
                 </div>
             </section>
 
@@ -789,25 +769,11 @@
 
         <!-- FLOATING ACTIONS -->
         <div class="fixed bottom-6 right-6 flex flex-col items-end gap-3 z-40 no-print">
-            <button onclick="toggleFloatingMenu()" id="btn-fab-main" class="w-14 h-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-2xl flex items-center justify-center shadow-lg transition-all duration-300 transform">➕</button>
+            <button onclick="toggleFloatingMenu()" id="btn-fab-main" class="w-14 h-14 bg-[#356b69] hover:bg-[#264f4d] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-300 transform" aria-label="Acciones rápidas"><svg class="v2-icon" style="width:22px;height:22px"><use href="#i-plus"></use></svg></button>
             <div id="fab-menu" class="hidden flex-col items-end gap-2.5 mb-2 transform scale-95 opacity-0 transition-all duration-200">
-                <button onclick="openPatientModal(); toggleFloatingMenu();" class="flex items-center gap-2 bg-white px-4 py-2 border border-slate-200 text-slate-700 rounded-xl shadow-md text-sm font-semibold hover:bg-slate-50 transition-all">👤 Nuevo Paciente</button>
-                <button onclick="openAppointmentModal(); toggleFloatingMenu();" class="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 text-sm rounded-xl shadow-md font-semibold hover:bg-indigo-500 transition-all">🗓️ Programar Cita</button>
+                <button onclick="openPatientModal(); toggleFloatingMenu();" class="flex items-center gap-2 bg-white px-4 py-2 border border-slate-200 text-slate-700 rounded-xl shadow-md text-sm font-semibold hover:bg-slate-50 transition-all"><svg class="v2-icon"><use href="#i-users"></use></svg>Nuevo paciente</button>
+                <button onclick="openAppointmentModal(); toggleFloatingMenu();" class="flex items-center gap-2 bg-[#356b69] text-white px-4 py-2 text-sm rounded-xl shadow-md font-semibold hover:bg-[#264f4d] transition-all"><svg class="v2-icon"><use href="#i-calendar"></use></svg>Programar cita</button>
             </div>
-        </div>
-    </div>
-
-            <!-- BURBUJA DEL ASISTENTE IA (estilo widget de WhatsApp) -->
-        <div class="fixed bottom-6 left-6 z-40 no-print flex flex-col items-start gap-2">
-            <div id="assistant-fab-greet" onclick="openAssistantModal()" class="hidden max-w-[240px] bg-white text-slate-700 text-sm rounded-2xl rounded-bl-sm shadow-xl border border-slate-200 px-4 py-3 cursor-pointer relative animate-[fadeInUp_.25s_ease-out]">
-                <button onclick="event.stopPropagation(); hideFabGreetBubble();" class="absolute -top-2 -right-2 w-5 h-5 bg-slate-200 hover:bg-slate-300 rounded-full text-[11px] text-slate-600 flex items-center justify-center">&times;</button>
-                <span>Hola, soy tu asistente personal. ¿En qué puedo ayudarte hoy?</span>
-            </div>
-            <button onclick="openAssistantModal()" class="assistant-fab-btn w-16 h-16 rounded-full flex items-center justify-center shadow-xl text-3xl relative" title="Asistente IA" aria-label="Abrir asistente IA">
-                <span class="assistant-fab-ring"></span>
-                🤖
-                <span id="assistant-fab-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white"></span>
-            </button>
         </div>
     </div>
 
@@ -817,7 +783,7 @@
             <!-- Encabezado tipo chat -->
             <div class="bg-emerald-600 text-white px-4 py-3 flex justify-between items-center shrink-0">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-lg">🤖</div>
+                    <div class="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-[11px] font-black tracking-wide">IA</div>
                     <div>
                         <h3 class="font-bold text-sm leading-tight">Asistente personal</h3>
                         <p class="text-[11px] text-emerald-100 flex items-center gap-1 mt-0.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-300 inline-block"></span> <span id="assistant-subtitle">En línea · solo datos administrativos</span></p>
@@ -1158,55 +1124,56 @@
     </div>
 
 
-    <!-- MODAL IMPRESIÓN -->
-    <div id="print-modal" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 no-print">
-        <div class="bg-white w-full max-w-md max-h-[90vh] rounded-2xl shadow-xl overflow-hidden flex flex-col">
-            <div class="bg-indigo-900 text-white px-6 py-4 flex justify-between items-center flex-shrink-0">
-                <h3 class="font-bold text-base">🖨️ Generar Reporte de Consultas</h3>
-                <button onclick="closePrintModal()" class="text-indigo-200 hover:text-white transition text-lg">&times;</button>
+    <!-- MODAL IMPRESIÓN · V3.1 -->
+    <div id="print-modal" class="fixed inset-0 bg-slate-950/55 backdrop-blur-sm hidden items-center justify-center z-50 p-4 no-print">
+        <div class="v31-report-modal">
+            <div class="v31-report-modal-head">
+                <div class="v31-report-modal-icon"><svg class="v2-icon"><use href="#i-report"></use></svg></div>
+                <div><span>Centro de reportes</span><h3>Generar documento</h3><p>Selecciona el contenido y periodo. La impresión usa el nuevo formato institucional.</p></div>
+                <button onclick="closePrintModal()" class="v31-modal-close" aria-label="Cerrar"><svg class="v2-icon"><use href="#i-x"></use></svg></button>
             </div>
-            <div class="p-6 space-y-4 overflow-y-auto min-h-0">
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Contenido del Reporte</label>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="setPrintCategory('citas')" id="btn-pc-citas" class="flex-1 px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg transition">🗓️ Citas</button>
-                        <button type="button" onclick="setPrintCategory('finanzas')" id="btn-pc-finanzas" class="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">💰 Finanzas</button>
-                        <button type="button" onclick="setPrintCategory('recepcion')" id="btn-pc-recepcion" class="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">🛎️ Recepción</button>
+            <div class="v31-report-modal-body">
+                <div class="v31-form-block">
+                    <label>Contenido</label>
+                    <div class="v31-report-segments">
+                        <button type="button" onclick="setPrintCategory('citas')" id="btn-pc-citas" class="v31-segment-active"><svg class="v2-icon"><use href="#i-calendar"></use></svg><span>Agenda</span></button>
+                        <button type="button" onclick="setPrintCategory('finanzas')" id="btn-pc-finanzas"><svg class="v2-icon"><use href="#i-wallet"></use></svg><span>Finanzas</span></button>
+                        <button type="button" onclick="setPrintCategory('recepcion')" id="btn-pc-recepcion"><svg class="v2-icon"><use href="#i-reception"></use></svg><span>Recepción</span></button>
                     </div>
-                    <p id="print-category-hint" class="text-[11px] text-slate-400 mt-1.5 hidden">Lista simple sin datos clínicos ni de pago, lista para entregar en recepción.</p>
+                    <p id="print-category-hint" class="v31-report-hint hidden">Lista operativa sin información clínica ni montos.</p>
                 </div>
-                <div id="print-presencial-wrap" class="hidden flex items-center gap-2 -mt-1">
-                    <input type="checkbox" id="print-only-presencial" checked class="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
-                    <label for="print-only-presencial" class="text-xs text-slate-600">Incluir sólo consultas presenciales</label>
+                <div id="print-presencial-wrap" class="hidden v31-check-row">
+                    <input type="checkbox" id="print-only-presencial" checked>
+                    <label for="print-only-presencial">Incluir únicamente consultas presenciales</label>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Tipo de Reporte</label>
-                    <div class="flex gap-2">
-                        <button type="button" onclick="setPrintType('dia')" id="btn-pt-dia" class="flex-1 px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg transition">📅 Por Día</button>
-                        <button type="button" onclick="setPrintType('semana')" id="btn-pt-semana" class="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">📆 Por Semana</button>
-                        <button type="button" onclick="setPrintType('mes')" id="btn-pt-mes" class="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">🗓️ Por Mes</button>
-                        <button type="button" onclick="setPrintType('personalizado')" id="btn-pt-personalizado" class="flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition">↔️ Rango</button>
+                <div class="v31-form-block">
+                    <label>Periodo</label>
+                    <div class="v31-report-segments v31-period-segments">
+                        <button type="button" onclick="setPrintType('dia')" id="btn-pt-dia" class="v31-segment-active">Día</button>
+                        <button type="button" onclick="setPrintType('semana')" id="btn-pt-semana">Semana</button>
+                        <button type="button" onclick="setPrintType('mes')" id="btn-pt-mes">Mes</button>
+                        <button type="button" onclick="setPrintType('personalizado')" id="btn-pt-personalizado">Rango</button>
                     </div>
                 </div>
                 <div id="print-custom-wrap" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Desde</label><input type="date" id="print-custom-start" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:outline-none"></div>
-                    <div><label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Hasta</label><input type="date" id="print-custom-end" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:outline-none"></div>
+                    <div class="v31-field-wrap"><label>Desde</label><input type="date" id="print-custom-start"></div>
+                    <div class="v31-field-wrap"><label>Hasta</label><input type="date" id="print-custom-end"></div>
                 </div>
-                <div id="print-date-wrap">
-                    <label id="print-date-wrap-label" class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Fecha de Reporte</label>
-                    <input type="date" id="print-date-select" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:outline-none">
+                <div id="print-date-wrap" class="v31-field-wrap">
+                    <label id="print-date-wrap-label">Fecha del reporte</label>
+                    <input type="date" id="print-date-select">
                 </div>
-                <div id="print-month-wrap" class="hidden">
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Mes de Reporte</label>
-                    <input type="month" id="print-month-select" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:outline-none">
+                <div id="print-month-wrap" class="hidden v31-field-wrap">
+                    <label>Mes del reporte</label>
+                    <input type="month" id="print-month-select">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1.5">Especialista (Firma / Cabecera)</label>
-                    <input type="text" id="print-specialist-name" placeholder="Ej: Dra. Lisbeth Méndez" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-sm focus:outline-none">
+                <div class="v31-field-wrap">
+                    <label>Especialista</label>
+                    <input type="text" id="print-specialist-name" placeholder="Ej. Lic. Lisbeth Méndez">
                 </div>
-                <div class="flex gap-3 pt-2">
-                    <button type="button" onclick="closePrintModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 py-3 rounded-xl text-sm font-semibold transition">Cancelar</button>
-                    <button type="button" onclick="executeReportPrint()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl text-sm font-semibold shadow-md transition">Imprimir PDF</button>
+                <div class="v31-report-actions">
+                    <button type="button" onclick="closePrintModal()" class="v31-btn v31-btn-ghost">Cancelar</button>
+                    <button type="button" onclick="executeReportPrint()" class="v31-btn v31-btn-primary"><svg class="v2-icon"><use href="#i-printer"></use></svg><span>Vista de impresión</span></button>
                 </div>
             </div>
         </div>
@@ -1222,8 +1189,8 @@
                 <p class="text-sm text-teal-100">Ficha clínica del paciente</p>
             </div>
             <div class="flex items-center gap-3">
-                <button type="button" onclick="openAssistantForClinical()" class="bg-violet-500 hover:bg-violet-400 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">✨ Dictar con IA</button>
-                <button type="button" onclick="printClinicalHistory()" class="bg-white/15 hover:bg-white/25 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">🖨️ Imprimir</button>
+                <button type="button" onclick="openAssistantForClinical()" class="bg-white/15 hover:bg-white/25 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">Dictar con IA</button>
+                <button type="button" onclick="printClinicalHistory()" class="bg-white/15 hover:bg-white/25 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition"><svg class="v2-icon"><use href="#i-printer"></use></svg>Imprimir</button>
                 <button type="button" onclick="closeClinicalHistory()" class="text-white text-2xl hover:text-red-300">×</button>
             </div>
         </div>
@@ -1286,7 +1253,8 @@
 </div>
 
     <!-- ================= PLANTILLA DE IMPRESIÓN ================= -->
-    <div id="print-section" class="print-only p-8 text-slate-950 space-y-6">
+    <div id="print-section" class="print-only v31-print-doc p-8 text-slate-950 space-y-6">
+        <div class="v31-print-brand"><img src="logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga"><div><strong>Psicología Pro</strong><span>Gestión clínica y administrativa</span></div><em>Documento generado por el sistema</em></div>
         <div class="flex justify-between items-start border-b-2 border-slate-950 pb-5">
             <div>
                 <h1 id="print-title-main" class="text-3xl font-extrabold tracking-tight">REPORTE DIARIO DE AGENDA</h1>
@@ -1365,7 +1333,8 @@
     </div>
 
     <!-- ================= PLANTILLA DE IMPRESIÓN: FINANZAS ================= -->
-    <div id="print-section-finance" class="print-only hidden p-8 text-slate-950 space-y-5">
+    <div id="print-section-finance" class="print-only v31-print-doc hidden p-8 text-slate-950 space-y-5">
+        <div class="v31-print-brand"><img src="logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga"><div><strong>Psicología Pro</strong><span>Gestión clínica y administrativa</span></div><em>Documento generado por el sistema</em></div>
         <div class="flex justify-between items-start border-b-2 border-slate-950 pb-5">
             <div>
                 <h1 id="pf-title-main" class="text-3xl font-extrabold tracking-tight">REPORTE FINANCIERO DIARIO</h1>
@@ -1470,7 +1439,8 @@
     </div>
 
     <!-- ================= PLANTILLA DE IMPRESIÓN: RECEPCIÓN (lista simple) ================= -->
-    <div id="print-section-reception" class="print-only hidden p-8 text-slate-950 space-y-6">
+    <div id="print-section-reception" class="print-only v31-print-doc hidden p-8 text-slate-950 space-y-6">
+        <div class="v31-print-brand"><img src="logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga"><div><strong>Psicología Pro</strong><span>Gestión clínica y administrativa</span></div><em>Documento generado por el sistema</em></div>
         <div class="flex justify-between items-start border-b-2 border-slate-950 pb-5">
             <div>
                 <h1 id="pr-title-main" class="text-3xl font-extrabold tracking-tight">LISTA DE CITAS DEL DÍA</h1>
@@ -1515,7 +1485,7 @@
                     <p id="hist-modal-subtitle" class="text-xs text-indigo-300 mt-0.5"></p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="printPatientCard()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">🖨️ Imprimir Ficha</button>
+                    <button onclick="printPatientCard()" class="v31-btn v31-btn-primary"><svg class="v2-icon"><use href="#i-printer"></use></svg>Imprimir ficha</button>
                     <button onclick="closeHistoryModal()" class="text-indigo-200 hover:text-white transition text-xl leading-none">&times;</button>
                 </div>
             </div>
@@ -1542,11 +1512,12 @@
     </div>
 
     <!-- ================= PLANTILLA: FICHA DE PACIENTE (impresión) ================= -->
-    <div id="print-patient-card" class="print-only hidden p-8 text-slate-950 space-y-5">
+    <div id="print-patient-card" class="print-only v31-print-doc hidden p-8 text-slate-950 space-y-5">
+        <div class="v31-print-brand"><img src="logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga"><div><strong>Psicología Pro</strong><span>Gestión clínica y administrativa</span></div><em>Documento generado por el sistema</em></div>
         <div class="flex justify-between items-start border-b-2 border-slate-950 pb-4">
             <div>
                 <h1 class="text-2xl font-extrabold tracking-tight">FICHA CLÍNICA DEL PACIENTE</h1>
-                <p class="text-xs text-slate-500 mt-1">Documento clínico confidencial. Generado por Agenda Psicológica Pro+</p>
+                <p class="text-xs text-slate-500 mt-1">Documento clínico confidencial. Generado por Psicología Pro</p>
             </div>
             <div class="text-right text-xs">
                 <span class="font-bold block">Especialista:</span>
@@ -1654,11 +1625,11 @@
                 <button onclick="shiftHorarioWeek(-1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold transition">◀ Semana Anterior</button>
                 <button onclick="goToCurrentHorarioWeek()" class="px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-xs font-semibold transition">Esta Semana</button>
                 <button onclick="shiftHorarioWeek(1)" class="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-xs font-semibold transition">Semana Siguiente ▶</button>
-                <button onclick="downloadHorarioImage()" id="btn-descargar-horario" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5">
-                    ⬇️ Descargar Imagen
+                <button onclick="downloadHorarioImage()" id="btn-descargar-horario" class="v31-btn v31-btn-primary">
+                    <svg class="v2-icon"><use href="#i-download"></use></svg>Descargar imagen
                 </button>
-                <button onclick="downloadHorarioExcel()" id="btn-descargar-horario-excel" class="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5">
-                    📊 Descargar Excel
+                <button onclick="downloadHorarioExcel()" id="btn-descargar-horario-excel" class="v31-btn v31-btn-soft" style="background:#eef6f4;color:#356b69;border-color:#d3e6e2">
+                    <svg class="v2-icon"><use href="#i-download"></use></svg>Descargar Excel
                 </button>
                 <button onclick="document.getElementById('modal-horario').classList.add('hidden')" 
                         class="text-slate-400 hover:text-slate-600 font-bold text-xl px-2">✕</button>
@@ -1753,9 +1724,9 @@
 
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script type="module" src="app.js?v=20261007-V23"></script>
+    <script type="module" src="app.js?v=20261007-V31"></script>
     <script src="assistant.js?v=20261001-3"></script>
-    <script src="ui.js?v=20261006-2"></script>
+    <script src="ui.js?v=20261007-V31"></script>
     <script src="v2.js?v=20261007-V23"></script>
     <script src="v3.js?v=20261007-V3"></script>
 </body>

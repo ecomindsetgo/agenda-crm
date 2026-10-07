@@ -1799,35 +1799,47 @@ window.printClinicalHistory = function() {
                     pendiente:'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
                 }[a.status] || 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100';
                 const modalityBadge = a.modality === 'virtual'
-                    ? '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-sky-50 text-sky-700 border-sky-200">💻 Virtual</span>'
-                    : '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-graphite-50 text-graphite-600 border-graphite-200">🏢 Presencial</span>';
+                    ? '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-sky-50 text-sky-700 border-sky-200">Virtual</span>'
+                    : '<span class="text-xs font-semibold px-2 py-0.5 rounded-xl border bg-graphite-50 text-graphite-600 border-graphite-200">Presencial</span>';
                 return `
-                <div class="bg-white p-5 rounded-3xl border border-sage-100/70 card-soft flex flex-col sm:flex-row justify-between sm:items-center gap-4 hover:shadow-md transition">
-                    <div class="space-y-1">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <span class="text-sm font-bold text-graphite-700 bg-graphite-100 px-2 py-0.5 rounded-lg">⏰ ${a.time}</span>
-                            <h4 class="font-extrabold text-graphite-800 text-base">${a.patientName}</h4>
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${statusTextMap[a.status] || String(a.status || 'AGENDADA').toUpperCase()}</span>
-                            ${modalityBadge}
+                <article class="v31-appointment-card">
+                    <div class="v31-time-rail">
+                        <strong>${a.time}</strong>
+                        <span>${a.modality === 'virtual' ? '<svg class="v2-icon"><use href="#i-video"></use></svg>' : '<svg class="v2-icon"><use href="#i-location"></use></svg>'}</span>
+                    </div>
+                    <div class="v31-appointment-content">
+                        <div class="v31-appointment-top">
+                            <div>
+                                <h4>${a.patientName}</h4>
+                                <div class="v31-badge-row">
+                                    <span class="v31-status-badge ${badge}">${statusTextMap[a.status] || String(a.status || 'AGENDADA').toUpperCase()}</span>
+                                    ${modalityBadge.replace('text-xs font-semibold px-2 py-0.5 rounded-xl border','v31-status-badge')}
+                                    <span class="v31-status-badge ${payBadgeCls}">${a.paymentStatus === 'pagado' ? 'Pagado' : 'Pago pendiente'}</span>
+                                </div>
+                            </div>
+                            <div class="v31-appointment-actions-primary">
+                                <button onclick="enviarRecordatorioWhatsapp('${a.id}')" title="Enviar recordatorio" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-message"></use></svg></button>
+                                <button onclick="editAppointment('${a.id}')" title="Editar cita" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-edit"></use></svg></button>
+                                <button onclick="deleteAppointment('${a.id}')" title="Eliminar cita" class="v31-icon-btn v31-danger"><svg class="v2-icon"><use href="#i-trash"></use></svg></button>
+                            </div>
                         </div>
-                        <p class="text-xs text-graphite-500 italic">"${a.notes || 'Sin observaciones para esta sesión'}"</p>
+                        <p class="v31-appointment-note">${a.notes || 'Sin observaciones para esta sesión'}</p>
+                        <div class="v31-appointment-footer">
+                            <label><span>Estado</span>
+                                <select onchange="updateAppointmentStatus('${a.id}', this.value, this)" class="${statusSelectCls}">
+                                    <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Agendada</option>
+                                    <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
+                                    <option value="arrived" ${a.status === 'arrived' ? 'selected' : ''}>Llegó</option>
+                                    <option value="in_session" ${a.status === 'in_session' ? 'selected' : ''}>En sesión</option>
+                                    <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
+                                    <option value="no_asistio" ${a.status === 'no_asistio' ? 'selected' : ''}>No asistió</option>
+                                    <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
+                                </select>
+                            </label>
+                            <button onclick="quickTogglePayment('${a.id}')" class="v31-payment-btn ${payBadgeCls}"><svg class="v2-icon"><use href="#i-money"></use></svg><span>${a.paymentStatus === 'pagado' ? 'Pagado' : 'Registrar pago'}</span></button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 flex-wrap self-end sm:self-center">
-                        <button onclick="enviarRecordatorioWhatsapp('${a.id}')" title="Enviar recordatorio por WhatsApp" class="bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 text-xs px-3 py-1.5 rounded-xl font-semibold flex items-center gap-1">📲 WhatsApp</button>
-                        <select onchange="updateAppointmentStatus('${a.id}', this.value, this)" title="Cambiar estado de la cita" class="border text-xs px-2 py-1.5 rounded-xl font-semibold cursor-pointer transition ${statusSelectCls}">
-                            <option value="pendiente" ${a.status === 'pendiente' ? 'selected' : ''}>Agendada</option>
-                            <option value="confirmada" ${a.status === 'confirmada' ? 'selected' : ''}>Confirmada</option>
-                            <option value="arrived" ${a.status === 'arrived' ? 'selected' : ''}>Llegó</option>
-                            <option value="in_session" ${a.status === 'in_session' ? 'selected' : ''}>En sesión</option>
-                            <option value="completada" ${a.status === 'completada' ? 'selected' : ''}>Completada</option>
-                            <option value="no_asistio" ${a.status === 'no_asistio' ? 'selected' : ''}>No asistió</option>
-                            <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
-                        </select>
-                        <button onclick="quickTogglePayment('${a.id}')" title="Cambiar estado de pago" class="text-xs px-3 py-1.5 rounded-xl font-semibold border ${payBadgeCls}">${payBadgeLbl}</button>
-                        <button onclick="editAppointment('${a.id}')" class="text-sage-600 hover:text-sage-800 text-xs font-bold">✏️</button>
-                        <button onclick="deleteAppointment('${a.id}')" class="text-red-500 hover:text-red-700 text-xs font-bold">🗑️</button>
-                    </div>
-                </div>`;
+                </article>`;
             }).join('');
         };
 
@@ -1866,8 +1878,8 @@ window.printClinicalHistory = function() {
             const monthView = document.getElementById('citas-month-view');
             const btnDia    = document.getElementById('btn-view-dia');
             const btnMes    = document.getElementById('btn-view-mes');
-            const activeCls   = "px-3 py-1.5 bg-sage-600 text-white text-xs font-semibold rounded-lg shadow-sm transition";
-            const inactiveCls = "px-3 py-1.5 bg-graphite-100 hover:bg-graphite-200 text-graphite-600 text-xs font-semibold rounded-lg transition";
+            const activeCls   = "v31-view-active";
+            const inactiveCls = "";
 
             if (view === 'dia') {
                 dayView.classList.remove('hidden');
@@ -3326,7 +3338,7 @@ window.printClinicalHistory = function() {
                     } else if (citaSlot) {
                         html += `<div title="${String(citaSlot.patientName||'Cita').replace(/["<>]/g,'')}" class="v23-appt-slot"><span>Ocupado</span><small>${String(citaSlot.patientName||'Cita').replace(/[<>]/g,'')}</small></div>`;
                     } else if (bloqueadoPorDefecto || yaPaso) {
-                        html += `<div class="v23-unavailable-slot"><span>${bloqueadoPorDefecto?'No disponible':'Pasado'}</span></div>`;
+                        html += `<div class="v23-unavailable-slot"><span>${bloqueadoPorDefecto?'No disponible':'Ocupado'}</span></div>`;
                     } else {
                         html += `<div class="v23-free-slot"><span>Libre</span></div>`;
                     }
@@ -3525,7 +3537,7 @@ window.printClinicalHistory = function() {
             try {
                 if (btn) {
                     btn.disabled = true;
-                    btn.innerHTML = '⏳ Generando...';
+                    btn.textContent = 'Generando…';
                 }
 
                 XLSX.writeFile(workbook, fileName, { compression: true });
@@ -3535,7 +3547,7 @@ window.printClinicalHistory = function() {
             } finally {
                 if (btn) {
                     btn.disabled = false;
-                    btn.innerHTML = '📊 Descargar Excel';
+                    btn.innerHTML = '<svg class="v2-icon"><use href="#i-download"></use></svg>Descargar Excel';
                 }
             }
         };
@@ -3549,7 +3561,7 @@ window.printClinicalHistory = function() {
                 return;
             }
             const originalLabel = btn ? btn.innerHTML : '';
-            if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Generando...'; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
 
             // Guardamos los estilos originales para poder revertirlos después
             const prevAreaWidth = area.style.width;
@@ -3567,6 +3579,8 @@ window.printClinicalHistory = function() {
                 }
                 area.style.width = 'max-content';
                 area.style.maxWidth = 'none';
+                // La imagen descargada protege la privacidad: no incluye nombres.
+                area.classList.add('v31-privacy-capture');
                 // Forzamos un reflow para que los estilos se apliquen antes de capturar
                 void area.offsetWidth;
 
@@ -3593,6 +3607,7 @@ window.printClinicalHistory = function() {
                     scrollWrap.style.overflow = prevWrapOverflow;
                     scrollWrap.style.width = prevWrapWidth;
                 }
+                area.classList.remove('v31-privacy-capture');
                 area.style.width = prevAreaWidth;
                 area.style.maxWidth = prevAreaMaxWidth;
                 if (btn) { btn.disabled = false; btn.innerHTML = originalLabel; }

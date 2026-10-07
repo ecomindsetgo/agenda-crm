@@ -11,9 +11,7 @@
 
         function setFilterStatus(status) {
             ['todas','pendiente','completada','cancelada'].forEach(st => {
-                document.getElementById('btn-f-' + st).className = st === status
-                    ? "px-3 py-1 bg-indigo-600 text-white text-xs font-semibold rounded-lg shadow-sm transition"
-                    : "px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition";
+                document.getElementById('btn-f-' + st).className = st === status ? "v31-filter-active" : "";
             });
             // Puente limpio hacia el scope del módulo
             document.body.dispatchEvent(new CustomEvent('filter-status-changed', { detail: status }));
@@ -92,8 +90,8 @@
 
         function setPrintCategory(category) {
             window._printCategory = category;
-            const activeCls   = "flex-1 px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg transition";
-            const inactiveCls = "flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition";
+            const activeCls   = "v31-segment-active";
+            const inactiveCls = "";
             document.getElementById('btn-pc-citas').className     = category === 'citas'     ? activeCls : inactiveCls;
             document.getElementById('btn-pc-finanzas').className  = category === 'finanzas'  ? activeCls : inactiveCls;
             document.getElementById('btn-pc-recepcion').className = category === 'recepcion' ? activeCls : inactiveCls;
@@ -105,8 +103,8 @@
 
         function setPrintType(type) {
             window._printType = type;
-            const activeCls   = "flex-1 px-3 py-2 bg-indigo-600 text-white text-xs font-semibold rounded-lg transition";
-            const inactiveCls = "flex-1 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold rounded-lg transition";
+            const activeCls   = "v31-segment-active";
+            const inactiveCls = "";
             document.getElementById('btn-pt-dia').className    = type === 'dia'    ? activeCls : inactiveCls;
             document.getElementById('btn-pt-semana').className = type === 'semana' ? activeCls : inactiveCls;
             document.getElementById('btn-pt-mes').className    = type === 'mes'    ? activeCls : inactiveCls;
