@@ -514,6 +514,21 @@ id:doc.id,
             const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
             await updateDoc(ref, { leadStatus: 'seguimiento', followUpAt: new Date().toISOString(), crmUpdatedAt: new Date().toISOString() });
         };
+
+        // V3: puente de compatibilidad para añadir metadatos nuevos sin mover ni borrar documentos existentes.
+        window.updatePatientV3 = async function(pid, patch) {
+            if (!state.currentUser) throw new Error('Sesión no disponible');
+            if (!pid || !patch || typeof patch !== 'object') throw new Error('Actualización inválida');
+            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
+            await setDoc(ref, { ...patch, v3UpdatedAt: new Date().toISOString() }, { merge: true });
+        };
+
+        window.updateAppointmentV3 = async function(aid, patch) {
+            if (!state.currentUser) throw new Error('Sesión no disponible');
+            if (!aid || !patch || typeof patch !== 'object') throw new Error('Actualización inválida');
+            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
+            await setDoc(ref, { ...patch, v3UpdatedAt: new Date().toISOString() }, { merge: true });
+        };
 window.openClinicalHistory = function(patientId){
     try {
         const patients = Array.isArray(state.patients) ? state.patients : [];
