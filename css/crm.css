@@ -63,3 +63,13 @@
  .elo-filter{display:flex;align-items:center;gap:9px;font-size:13px;color:#5b7667}.elo-filter select{padding:9px 11px;border:1px solid #d2e1d8;background:#f7faf8;border-radius:9px}.elo-assistant #elo-read[hidden]{display:none!important}
  @media(max-width:760px){.elo-filter{display:block}.elo-filter select{display:block;margin-top:5px;max-width:130px}}
 }
+
+/* V8.4: detalles contextuales en móvil, sin duplicar formularios */
+@media screen and (min-width:761px){.elo-inline-detail{display:none!important}.elo-desktop-detail{min-width:0}}
+@media screen and (max-width:760px){.elo-agenda-workspace{display:block!important}.elo-desktop-detail{display:none!important}.elo-session-item{min-width:0}.elo-session-item>.elo-inline-detail{display:block!important;margin:8px 0 15px}.elo-session-item>.elo-inline-detail .elo-session-detail{margin:0}.elo-session-list{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}}
+/* Los documentos PDF nunca deben contener el menú de la aplicación. */
+@media print{.v2-mobile-nav,.v2-sidebar,#v36-more-sheet,#v36-more-overlay,.v36-mobile-more,.no-print,nav[aria-label="Navegación móvil"]{display:none!important;visibility:hidden!important}body{padding:0!important;margin:0!important}#app-container{padding:0!important;margin:0!important}#app-container>header,#app-container>aside,#app-container>footer{display:none!important}}
+@media print {
+  #app-container, #auth-screen, #loading-screen, .v2-mobile-nav {display:none!important}
+  #print-section:not(.hidden),#print-section-finance:not(.hidden),#print-section-reception:not(.hidden),#print-patient-card:not(.hidden),#print-clinical-history:not(.hidden),#crm-report-print:not(.hidden){visibility:visible!important}
+}

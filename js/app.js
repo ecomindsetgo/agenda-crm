@@ -761,7 +761,7 @@ window.registerAppointmentPayment = async function(aid,data){
         const snap=await transaction.get(ref);if(!snap.exists())throw new Error('Cita no encontrada.');const a=snap.data();
         if(['cancelada','no_asistio'].includes(a.status)||a.isManualBlock)throw new Error('Selecciona una cita activa para registrar un pago.');
         const events=Array.isArray(a.paymentHistory)?a.paymentHistory:[];if(events.some(e=>e.id===operationId))return;
-        const cost=Math.round(window.CRMCore.cost(a)*100),paid=Math.round(window.CRMCore.paid(a)*100);if(amount>cost-paid)throw new Error('El abono supera el saldo pendiente.');
+        const cost=Math.round(window.CRMCore.cost(a)*100),paid=Math.round(window.CRMCore.paid(a)*100);if(cost<=0||amount>cost-paid)throw new Error('El abono supera el saldo pendiente.');
         const total=paid+amount;transaction.update(ref,{paidAmount:total/100,paymentStatus:total>=cost?'pagado':'parcial',paymentDate:date,paymentMethod:method,paymentHistory:[...events,{id:operationId,amount:amount/100,date,method,createdAt:new Date().toISOString(),createdBy:state.currentUser.uid}],paymentUpdatedAt:new Date().toISOString(),updatedBy:state.currentUser.uid});
     });
 };
@@ -1770,13 +1770,18 @@ window.printClinicalHistory = async function() {
                 sessionValue:   parseFloat(document.getElementById('app-session-value').value || 0),
                 cost:           parseFloat(document.getElementById('app-cost').value || 0),
                 currency:       apptCurrency,
-                paymentStatus:  document.getElementById('app-payment').value,
+                paymentStatus:  existingAppt ? existingAppt.paymentStatus : document.getElementById('app-payment').value,
                 status:         newStatus,
                 packageConsumed: packageConsumed,
                 notes:          document.getElementById('app-notes').value.trim(),
                 updatedAt:      new Date().toISOString()
             };
             const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
+            if (existingAppt) {
+                payload.updatedBy = state.currentUser.uid;
+                payload.paymentStatus = existingAppt.paymentStatus || 'pendiente';
+                payload.paidAmount = window.CRMCore.paid(existingAppt);
+            }
             await setDoc(ref, payload, { merge: true });
 
             // Sincronizar consumo de sesión de paquete según el estado guardado
@@ -1794,46 +1799,55 @@ window.printClinicalHistory = async function() {
             await window.updateAppointmentStatus(aid, 'cancelada');
         };
 
+        // Toda transición de estado deja un evento con autor y valor anterior.
         window.quickToggleStatus = async function(aid, currentStatus) {
             const next = { pendiente: 'completada', completada: 'cancelada', cancelada: 'pendiente' };
-            const newStatus = next[currentStatus] || 'pendiente';
-            const a = state.appointments.find(x => x.id === aid);
-            const ref  = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-            await updateDoc(ref, { status: newStatus });
-            if (a) await syncPackageOnStatusChange(a, currentStatus, newStatus);
+            return window.updateAppointmentStatus(aid, next[currentStatus] || 'pendiente');
         };
 
-        // Cambia el estado de una cita directamente al valor elegido en el
-        // <select> de la ficha, sin necesidad de abrir el modal de edición.
         window.updateAppointmentStatus = async function(aid, newStatus, selectEl) {
-            const a = state.appointments.find(x => x.id === aid);
-            if (!a) return;
-            const oldStatus = a.status;
-            if (oldStatus === newStatus) return;
+            if (!state.currentUser) throw new Error('Inicia sesión.');
+            const allowed = ['pendiente','confirmada','arrived','in_session','completada','cancelada','no_asistio'];
+            if (!allowed.includes(newStatus)) throw new Error('Estado inválido.');
+            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
+            let previous;
             try {
-                const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-                await updateDoc(ref, { status: newStatus, statusUpdatedAt: new Date().toISOString(), updatedBy: state.currentUser.uid });
-                await syncPackageOnStatusChange(a, oldStatus, newStatus);
+                await runTransaction(db, async tx => {
+                    const snapshot = await tx.get(ref);
+                    if (!snapshot.exists() || snapshot.data().isManualBlock) throw new Error('Cita no encontrada.');
+                    const original = snapshot.data();
+                    previous = { ...original, id: aid };
+                    const oldStatus = original.status || 'pendiente';
+                    if (oldStatus === newStatus) return;
+                    const history = Array.isArray(original.statusHistory) ? original.statusHistory : [];
+                    const at = new Date().toISOString();
+                    tx.update(ref, {status:newStatus,statusUpdatedAt:at,updatedAt:at,updatedBy:state.currentUser.uid,
+                        statusHistory:[...history,{id:crypto.randomUUID(),from:oldStatus,to:newStatus,at,by:state.currentUser.uid}]});
+                });
+                if (previous && previous.status !== newStatus) await syncPackageOnStatusChange(previous, previous.status, newStatus);
             } catch (err) {
                 console.error('Error al actualizar estado:', err);
-                alert('⚠️ No se pudo actualizar el estado de la cita.');
-                if (selectEl) selectEl.value = oldStatus;
+                if (selectEl && previous) selectEl.value = previous.status;
+                alert('No se pudo completar totalmente el cambio de estado: ' + err.message);
+                throw err;
             }
         };
 
-        // Alterna el estado de pago (pendiente ⇄ pagado) directamente desde la
-        // ficha de la cita, sin necesidad de abrir el modal de edición.
+        // Cobro con historial e idempotencia; nunca borrar cobros con un toggle.
         window.quickTogglePayment = async function(aid) {
             const a = state.appointments.find(x => x.id === aid);
-            if (!a) return;
-            const newPaymentStatus = a.paymentStatus === 'pagado' ? 'pendiente' : 'pagado';
-            try {
-                const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-                await updateDoc(ref, { paymentStatus: newPaymentStatus, paidAmount: newPaymentStatus === 'pagado' ? window.CRMCore.cost(a) : 0, paymentUpdatedAt: new Date().toISOString(), updatedBy: state.currentUser.uid });
-            } catch (err) {
-                console.error('Error al actualizar estado de pago:', err);
-                alert('⚠️ No se pudo actualizar el estado de pago.');
-            }
+            if (!a || !state.currentUser) return;
+            if (['cancelada','no_asistio'].includes(a.status)) { alert('La cita no está activa.'); return; }
+            const remaining = window.CRMCore.remaining(a);
+            if (remaining <= 0) { alert('Esta cita no tiene saldo pendiente. Para corregir un cobro, utiliza un procedimiento de reversión auditado; no se borrarán pagos existentes.'); return; }
+            const value = prompt(`Saldo pendiente: ${window.CRMCore.currency(a)==='USD'?'US$':'S/'} ${remaining.toFixed(2)}. Ingresa el importe recibido:`, remaining.toFixed(2));
+            if (value === null) return;
+            const amount = Number(String(value).trim().replace(',', '.'));
+            if (!Number.isFinite(amount) || amount <= 0 || Math.round(amount*100) > Math.round(remaining*100)) { alert('Importe incorrecto. No debe superar el saldo pendiente.'); return; }
+            const method = prompt('Medio de pago (Efectivo, Yape, Plin, Tarjeta, Transferencia):','Efectivo');
+            if (method === null) return;
+            try { await window.registerAppointmentPayment(aid, {amount, method:method.trim() || 'Otro',date:window.CRMCore.dateKey()}); }
+            catch(err) { console.error('No se pudo registrar el pago',err); alert('No se registró el pago: '+err.message); throw err; }
         };
 
         window.editAppointment = function(aid) {

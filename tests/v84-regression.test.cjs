@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const root=path.join(__dirname,'..');
+const js=fs.readFileSync(path.join(root,'js/experience.js'),'utf8');
+const css=fs.readFileSync(path.join(root,'css/crm.css'),'utf8');
+assert.match(js,/if\(view==='dia'\)renderAgenda\(\)/,'al volver a día se vuelve a renderizar');
+assert.match(js,/s\(\)\.citasView=view/,'las tres vistas comparten estado');
+assert.match(js,/elo-inline-detail/,'detalle móvil sigue a la cita');
+assert.match(js,/selected=selected===b\.dataset\.id\?'':b\.dataset\.id/,'se puede contraer el detalle');
+assert.match(css,/@media print\s*\{\s*#app-container, #auth-screen, #loading-screen, \.v2-mobile-nav/,'impresión oculta interfaz');
+assert.match(js,/d\.setDate\(d\.getDate\(\)\+6\)/,'semana de lunes a domingo local');
+console.log('OK: regresiones de vista, detalle móvil e impresión verificadas a nivel de código.');
