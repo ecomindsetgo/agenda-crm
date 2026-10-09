@@ -12,3 +12,7 @@ La entrega actual es una PWA: instala el acceso desde el navegador al publicar e
 6. Compilar, firmar y publicar cada aplicación con las herramientas y cuentas de desarrollador correspondientes.
 
 La preparación web no sustituye las pruebas ni el trabajo de integración nativa. Referencias oficiales: https://capacitorjs.com/docs y https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Guides/Making_PWAs_installable .
+
+## Integraciones de la versión 7
+
+Incluye también js/experience.js al preparar el directorio web. Las funciones de WhatsApp y asistente se despliegan por separado en Firebase, según ACTIVAR-WHATSAPP-E-IA.md. La automatización de WhatsApp no depende de mantener abierta la app, una vez desplegada y activada. El dictado actual usa las capacidades del navegador; la versión nativa deberá verificar voz, permisos y autenticación en dispositivos reales.

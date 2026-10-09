@@ -1,76 +1,62 @@
-# Agenda Pro · CRM del Consultorio
+# Consultorio Lisbeth Méndez · Versión 7
 
-Esta versión usa el proyecto correcto `agenda-crm-main`, conserva los verdes de la marca y las rutas existentes de Firebase. Se integra una capa de organización y administración sin borrar ni trasladar masivamente los registros.
+Referencia funcional: el video de HolaElo aportado por el usuario. Se conserva el verde de la marca, el formato clínico y la conexión al proyecto Firebase existente.
 
-## Módulos
+## Trabajo diario
 
-| Área | Módulos | Propósito |
-|---|---|---|
-| Operación diaria | Inicio, agenda, recepción | Próxima atención, sesiones, horarios, bloqueos y llegada de pacientes |
-| Gestión clínica | Pacientes/CRM, historias, sesiones, evaluaciones, documentos | Ficha integral del paciente y continuidad de la atención |
-| Administración | Finanzas, caja diaria, reportes, alertas | Cobros, saldos, pendientes y seguimiento |
-| Herramientas | Tareas, asistente IA, mi plataforma | Actividades, apoyo administrativo, perfil, instalación y respaldo |
+- **Inicio:** citas de hoy y Agendar cita.
+- **Agenda:** vistas de día, semana y mes. Lista compacta de sesiones; selecciona una para ver su detalle. Desde el detalle puedes cambiar estado, reprogramar, acceder a la historia, escribir una nota y registrar un pago.
+- **Pacientes:** listado y ficha; historias clínicas, evaluaciones y documentos quedan en pestañas internas.
+- **Recordatorios:** próximas citas, avisos locales y acceso a la conexión de WhatsApp automático.
+- **Finanzas:** cobrado, por cobrar, deuda de sesiones atendidas y pagos pendientes. Registrar pago abre la sesión correspondiente. Soles y dólares permanecen separados.
+- **Notas:** selecciona el paciente y escribe evolución/acuerdos; cada nota anterior se abre individualmente.
+- **Asistente:** texto o dictado, propuesta revisable y acciones sobre citas, pagos y notas. Escuchar respuesta es opcional.
+- **Más opciones:** reportes, recepción, configuración y tareas.
 
-Los módulos clínicos, calendario y CRM existentes se conservan. Los reportes administrativos no incorporan diagnósticos, motivos de consulta ni notas clínicas. La historia clínica conserva su impresión independiente.
+Solo se muestra un módulo a la vez. En móvil el detalle queda debajo de la lista; Más opciones reúne los accesos secundarios.
 
-## Refuerzos implementados
+## Pagos y agenda
 
-- Navegación agrupada por área; controlador final limita la vista a una sección activa. Menú secundario móvil por módulos.
-- Panel de inicio reestructurado con indicadores, agenda del día, próxima cita y accesos clínicos.
-- Motor financiero común para indicadores, caja, reportes y resumen financiero. PEN y USD se mantienen separados.
-- Tratamiento de abonos parciales, saldos no negativos, estados cancelados y exclusión de bloqueos de horarios del cálculo económico.
-- Caja y reportes se agrupan por **fecha de cita**. No representan un libro bancario por fecha exacta del movimiento ni contabilidad tributaria.
-- Un cobro registrado no desaparece al cancelar una cita; cancelar no registra un reembolso. No se implementó un libro separado de reembolsos ni gastos.
-- Centro de reportes con rango, estado, nombre editable de profesional, vista previa, PDF mediante impresión y CSV con protección contra fórmulas.
-- Enlaces de documentos restringidos a HTTP/HTTPS. Mejor tratamiento de texto de pacientes y evoluciones en las pantallas modificadas.
-- Pacientes se archivan como inactivos en lugar de eliminar sus fichas. Se reactivan cambiando el estado CRM. La opción de eliminar una cita ahora la cancela y conserva el registro.
-- Metadato `updatedBy` en los cambios reforzados de fichas, citas, pagos y estados. No constituye una auditoría inmutable.
-- Respaldo JSON incluye pacientes, citas, bloqueos, historias, notas y tareas locales. Esta entrega no incluye restauración automática de ese respaldo.
+Los nuevos abonos se guardan mediante transacción, validando el saldo. Se conserva un detalle de importe, fecha y medio de pago dentro de la cita. La misma operación no se registra dos veces. Los pagos antiguos siguen conservando su importe acumulado; no se inventan fechas ni movimientos detallados anteriores.
 
-## Historia clínica
+Cancelar una cita no genera un reembolso. Los pacientes se archivan manteniendo sus registros. Los reportes financieros se agrupan por fecha de cita; no se presentan como libro de movimientos bancarios.
 
-Texto continuo con páginas adicionales, encabezado/logo y pie turquesa en cada hoja. Encabezado compacto y espacio reservado de 8 mm sobre el pie. No se repite la historia personal.
+La validación de agenda detecta cruces de sesiones de 60 minutos y bloqueos manuales, y excluye las citas canceladas/no asistidas del conflicto. Esto mejora la comprobación anterior que solo comparaba la hora exacta. La validación de horarios ocurre al guardar; no es un bloqueo transaccional entre varios profesionales que guardan simultáneamente.
 
-Códigos HC-0101 a HC-9999, asignados mediante transacción Firebase. Nombre sugerido al guardar como PDF: nombre del paciente y fecha de Perú. Se requiere conexión para asignar un código.
+## WhatsApp automático e IA
 
-Para PDF: A4, escala 100%, gráficos de fondo activados y encabezados/pies adicionales del navegador desactivados.
+Se incluyen las funciones de servidor y los controles de conexión. **No están activados ni desplegados en las cuentas del usuario.** Subir los archivos web no activa envíos por sí solo. Consulta ACTIVAR-WHATSAPP-E-IA.md para conectar Meta, Gemini y desplegar Firebase.
 
-## Móvil e instalación
+El servicio de WhatsApp puede trabajar aunque la web esté cerrada, después de desplegarlo y activarlo. Los avisos locales del navegador, en cambio, requieren la app abierta. Los botones manuales existentes de WhatsApp no constituyen automatización.
 
-Incluye manifiesto, iconos, service worker y una página de desconexión. Publica en HTTPS y abre **Mi plataforma → Instalar**. En iPhone/Safari utiliza Compartir → Añadir a pantalla de inicio.
+La IA prepara una acción, no afirma ejecutarla antes de la confirmación. No carga automáticamente historias clínicas ni notas existentes. No se implementó un webhook de entrega/lectura, transcripción de archivos de audio grabados, creación de diagnósticos ni un proveedor de pagos bancarios.
 
-La aplicación instalada necesita conexión para abrir los datos y guardar cambios. Se cachea únicamente interfaz estática del mismo dominio; no se cachean respuestas de Firebase, historias, audios, PDFs ni respaldos. No se ofrecen recordatorios automáticos en segundo plano.
+## Impresión clínica
 
-En `mobile/README.md` se describe la ruta futura a Android/iOS con Capacitor. El script `scripts/prepare-native.mjs` prepara `www/`. No se entrega APK, IPA ni una publicación en tiendas.
+Se mantiene el generador de la versión anterior: código desde HC-0101, encabezado/logo reducido y pie por página, flujo de texto continuo y reserva del pie. Al guardar mediante impresión del navegador se propone paciente y fecha de Lima. Esta revisión no cambia nuevamente el diseño del PDF clínico.
 
-## Tareas
+## Actualizar la web
 
-Las tareas se guardan por usuario en este navegador, se pueden completar, filtrar y eliminar. No se sincronizan entre dispositivos. Se incluyen en el respaldo del usuario. Los demás registros principales conservan Firebase como fuente.
+1. Descomprime el ZIP.
+2. Actualiza index.html, css, js, assets, manifest.webmanifest, sw.js y offline.html, conservando las rutas. Conserva CNAME si utilizas el mismo dominio.
+3. Recarga con Ctrl+F5 y usa tu cuenta habitual.
+4. Comprueba una fecha que tenga citas reales. Si hay un problema de conexión o permisos, se muestra dentro de la sección con Reintentar.
 
-## Seguridad de Firebase
+Los archivos functions, firebase.json, .firebaserc y ACTIVAR-WHATSAPP-E-IA.md se utilizan para la integración del servidor. No necesitas publicarlos como archivos del sitio estático. No se modificaron reglas ni datos de tu Firebase durante este trabajo.
 
-Se incluye `firestore.owner.rules`: ejemplo completo de reglas que exige una sesión y restringe cada ruta al UID dueño. No se ha publicado en tu Firebase. Antes de utilizarlo, confirma que las rutas reales corresponden a este proyecto y que no necesitas compartir una cuenta entre distintos UID o autorizar roles adicionales. Copia el archivo en Firestore → Reglas y publica cuando hayas comprobado esos requisitos.
+La base PWA y la preparación Capacitor se mantienen: consulta mobile/README.md. No se entrega APK/IPA ni una publicación en tiendas. La conexión es necesaria para cargar/guardar información. Las tareas siguen siendo locales por cuenta y navegador; las notas se guardan en Firestore. El respaldo JSON conserva pacientes, citas (con nuevos movimientos de pago), bloqueos, historias, notas y tareas; no se añadió restauración automática.
 
-La seguridad del servidor depende de las reglas efectivamente publicadas; no se sustituye con controles visuales. El cliente actual es para un consultorio por cuenta. No se implementó administración multiempresa ni delegación de roles entre profesionales.
+## Comprobaciones
 
-## Actualizar
+Se probaron con datos ficticios y servicios simulados:
 
-1. Conserva una copia del proyecto anterior.
-2. Sube el contenido completo de esta carpeta respetando `css/`, `js/`, `assets/` y los archivos de instalación. Conserva `CNAME`.
-3. Recarga con Ctrl+F5. Si ya instalaste una versión anterior, cierra y vuelve a abrir la aplicación para permitir la renovación del service worker.
-4. Comprueba ingreso, crear/editar citas, estados, paquetes, historia clínica, reportes y cambios en un segundo dispositivo conectado.
+- Navegación aislada, datos visibles y actualización del módulo activo.
+- Chromium: agenda lista/detalle/semana, abonos, revisión de propuesta IA, formulario de nueva cita, dictado simulado, notas y móvil sin desbordamiento horizontal.
+- Validación de cruce de horarios al guardar.
+- Transacciones de pago: operación repetida y abono superior al saldo.
+- Servidor: consentimiento, citas canceladas, reclamos concurrentes de envío, resultado ambiguo sin reenvío, autorización por UID y consultas deterministas.
+- Finanzas, protección CSV, caché estática y sintaxis/exportaciones del SDK de funciones.
 
-No requiere volver a registrar pacientes ni trasladar datos. La asignación de códigos ocurre al abrir, guardar o imprimir una historia.
+No se realizaron envíos reales ni llamadas reales a Gemini, no se desplegaron funciones y no se accedió al Firebase del usuario. El dictado real depende del navegador/micrófono. La impresión clínica conservada debe comprobarse con tus documentos e impresora.
 
-## Validación realizada
-
-- Sintaxis de los scripts e identificadores HTML únicos.
-- Motor financiero: abonos, cancelaciones con cobro, monedas separadas, bloqueos, valores inválidos, fechas y saldos.
-- Seguridad de enlaces y exportación CSV.
-- Service worker: no intercepta Firestore, API, PDFs ni escrituras; ofrece página de desconexión.
-- Manifiesto, iconos y preparación de archivos para un futuro contenedor nativo.
-- Persistencia, texto seguro y aislamiento de tareas entre cuentas.
-
-Ejecutar `node tests/crm-core.test.cjs` y `node tests/service-worker.test.cjs` para repetir las pruebas del motor y de la caché.
-
-No se conectó con tu Firebase real ni se pudo revisar visualmente con navegador en este entorno. Las reglas no se probaron en el emulador y los flujos móviles de instalación/voz/PDF requieren comprobación en dispositivos reales.
+Para repetir pruebas: node tests/crm-core.test.cjs; node tests/service-worker.test.cjs; node --test functions/test/*.test.cjs. Las pruebas de interfaz requieren jsdom/playwright y Chromium. Ejecuta node tests/interface.dom.cjs y node tests/interface.browser.cjs.

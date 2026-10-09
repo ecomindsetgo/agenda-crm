@@ -1,0 +1,1 @@
+{"name":"consultorio-automation","private":true,"version":"7.0.0","main":"index.cjs","engines":{"node":"22"},"scripts":{"test":"node --test test/*.test.cjs"},"dependencies":{"firebase-admin":"^13.0.0","firebase-functions":"^7.0.0"}}

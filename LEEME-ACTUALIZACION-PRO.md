@@ -1,5 +1,5 @@
-# Entrega actual
+# Versión 7 · Agenda, pagos, notas y asistente
 
-Esta versión reemplaza la entrega en lavanda. Se mantienen los verdes de la marca.
+Lee README.md para actualizar la web. El flujo de agenda permite elegir una cita y trabajar con sus detalles al lado, conservando el verde de marca y un módulo visible por vez.
 
-Consulta `README.md` para módulos, cambios, instalación, reglas Firebase, validación y límites de la entrega; `mobile/README.md` para preparar una futura app de Android/iOS.
+Las funciones de WhatsApp automático y Gemini se incluyen, pero no están desplegadas ni activadas. Sigue ACTIVAR-WHATSAPP-E-IA.md para conectar las cuentas y publicarlas en Firebase. No coloques claves privadas en el navegador.

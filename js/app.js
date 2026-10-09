@@ -395,6 +395,9 @@ if (app) {
                 state.appointments = [];
                 state.manualBlocks = [];
                 state.patients = [];
+                state.histories = [];
+                state.notes = [];
+                state.syncErrors = {};
                 renderAll();
             }
         });
@@ -420,12 +423,20 @@ if (app) {
         function setupFirestoreSync(userId) {
             state.appointmentsReady = false;
             state.patientsReady = false;
+            state.syncErrors = {};
+            const notify = () => window.dispatchEvent(new Event("consultorio-data-changed"));
+            const syncError = (key, label) => error => {
+                console.error("Carga de " + label, error);
+                state.syncErrors[key] = error.code === "permission-denied" ? "No hay permisos para leer " + label + ". Revisa las reglas de Firebase." : "No se pudo conectar para leer " + label + ". Comprueba tu conexión.";
+                notify();
+            };
             const appointmentsRef = collection(db, 'artifacts', appId, 'users', userId, 'appointments');
             const patientsRef     = collection(db, 'artifacts', appId, 'users', userId, 'patients');
             const historiesRef = collection(db, 'artifacts', appId, 'users', userId, 'clinicalHistories');
             const notesRef = collection(db, 'artifacts', appId, 'users', userId, 'clinicalNotes');
             const unsubAppts = onSnapshot(appointmentsRef, (snapshot) => {
                 state.appointmentsReady = true;
+                delete state.syncErrors.appointments;
                 const appointmentDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 // Los bloqueos manuales se guardan en la misma colección permitida por
                 // las reglas actuales, pero se separan de las citas para no contaminar
@@ -438,16 +449,19 @@ if (app) {
                 if (window.renderV2Dashboard) window.renderV2Dashboard();
                 if (window.renderManualBlockList) window.renderManualBlockList();
                 if (window.actualizarGridHorarios && !document.getElementById('modal-horario')?.classList.contains('hidden')) window.actualizarGridHorarios();
-            });
+                notify();
+            }, syncError('appointments', 'citas'));
 
             const unsubPatients = onSnapshot(patientsRef, (snapshot) => {
                 state.patientsReady = true;
+                delete state.syncErrors.patients;
                 state.patients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderPatients();
                 updatePatientDropdowns();
                 updateStatsDashboard();
                 if (window.renderV2Dashboard) window.renderV2Dashboard();
-            });
+                notify();
+            }, syncError('patients', 'pacientes'));
             const unsubHistories = onSnapshot(
             historiesRef,
             (snapshot) => {
@@ -456,8 +470,9 @@ if (app) {
             id: doc.id,
             ...doc.data()
             }));
-
-    }
+            delete state.syncErrors.histories;
+            notify();
+    }, syncError('histories', 'historias clínicas')
 );
           
 const unsubNotes = onSnapshot(
@@ -471,8 +486,9 @@ id:doc.id,
 ...doc.data()
 
 }));
-
-}
+delete state.syncErrors.notes;
+notify();
+}, syncError('notes', 'notas clínicas')
 );
 
   activeListeners.push(unsubAppts, unsubPatients, unsubHistories, unsubNotes);
@@ -728,6 +744,36 @@ window.saveClinicalHistory = async function(){
         console.error('[Error guardando historia clínica]', error);
         alert("❌ No se pudo guardar la Historia Clínica. Revisa la consola para más detalles.");
     }
+};
+
+window.callConsultorioFunction ||= async function(name,data={}){
+    if(!state.currentUser)throw new Error('Inicia sesión para continuar.');
+    const {getFunctions,httpsCallable}=await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js');
+    const result=await httpsCallable(getFunctions(app,'us-central1'),name)(data);
+    return result.data;
+};
+window.registerAppointmentPayment = async function(aid,data){
+    if(!state.currentUser)throw new Error('Inicia sesión.');
+    const amount=Math.round(Number(data.amount)*100),date=data.date||window.CRMCore.dateKey(),method=String(data.method||'Otro').slice(0,80),operationId=data.operationId||crypto.randomUUID();
+    if(!Number.isFinite(amount)||amount<=0||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)throw new Error('Indica un importe positivo y una fecha válida.');
+    const ref=doc(db,'artifacts',appId,'users',state.currentUser.uid,'appointments',aid);
+    await runTransaction(db,async transaction=>{
+        const snap=await transaction.get(ref);if(!snap.exists())throw new Error('Cita no encontrada.');const a=snap.data();
+        if(['cancelada','no_asistio'].includes(a.status)||a.isManualBlock)throw new Error('Selecciona una cita activa para registrar un pago.');
+        const events=Array.isArray(a.paymentHistory)?a.paymentHistory:[];if(events.some(e=>e.id===operationId))return;
+        const cost=Math.round(window.CRMCore.cost(a)*100),paid=Math.round(window.CRMCore.paid(a)*100);if(amount>cost-paid)throw new Error('El abono supera el saldo pendiente.');
+        const total=paid+amount;transaction.update(ref,{paidAmount:total/100,paymentStatus:total>=cost?'pagado':'parcial',paymentDate:date,paymentMethod:method,paymentHistory:[...events,{id:operationId,amount:amount/100,date,method,createdAt:new Date().toISOString(),createdBy:state.currentUser.uid}],paymentUpdatedAt:new Date().toISOString(),updatedBy:state.currentUser.uid});
+    });
+};
+
+window.saveQuickClinicalNote = async function(data){
+    if(!state.currentUser)throw new Error('Inicia sesión para guardar.');
+    if(!state.patients.some(p=>p.id===data.patientId))throw new Error('Selecciona un paciente registrado.');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(data.fecha)||!data.evolucion.trim())throw new Error('Completa la fecha y la nota.');
+    const id='note_'+crypto.randomUUID();
+    await setDoc(doc(db,'artifacts',appId,'users',state.currentUser.uid,'clinicalNotes',id),{
+        patientId:data.patientId,fecha:data.fecha,sesion:String(data.sesion||'').trim(),evolucion:data.evolucion.trim(),updatedAt:new Date().toISOString(),updatedBy:state.currentUser.uid
+    });
 };
 
 window.newClinicalNote = function(note = {}) {
@@ -1605,7 +1651,7 @@ window.printClinicalHistory = async function() {
             const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 5);
             const startStr = horarioDateStr(weekStart), endStr = horarioDateStr(weekEnd);
             const blocks = (state.manualBlocks || []).filter(b => b.date >= startStr && b.date <= endStr).sort((a,b)=>(a.date+a.blockStart).localeCompare(b.date+b.blockStart));
-            root.innerHTML = blocks.length ? blocks.map(b => `<div class="v23-block-row"><div><strong>${new Date(b.date+'T00:00:00').toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'2-digit'})} · ${b.blockStart}–${b.blockEnd}</strong><span>${(b.reason||'Bloqueo manual').replace(/[<>]/g,'')}</span></div><button onclick="deleteManualBlock('${b.id}')" title="Eliminar bloqueo"><svg class="v2-icon"><use href="#i-trash"></use></svg></button></div>`).join('') : '<div class="v23-empty-mini">No hay rangos bloqueados manualmente en esta semana.</div>';
+            root.innerHTML = blocks.length ? blocks.map(b => `<div class="v23-block-row"><div><strong>${new Date(b.date+'T00:00:00').toLocaleDateString('es-PE',{weekday:'short',day:'2-digit',month:'2-digit'})} · ${b.blockStart}–${b.blockEnd}</strong><span>${(b.reason||'Bloqueo manual').replace(/[<>]/g,'')}</span></div><button onclick="deleteManualBlock('${b.id}')" title="Eliminar bloqueo"><svg class="v2-icon"><use href="#i-x"></use></svg><span>Cancelar</span></button></div>`).join('') : '<div class="v23-empty-mini">No hay rangos bloqueados manualmente en esta semana.</div>';
         };
 
         document.getElementById('appointment-form').addEventListener('submit', async (e) => {
@@ -1627,7 +1673,7 @@ window.printClinicalHistory = async function() {
 
             // ─── VALIDACIÓN DE DUPLICADOS ────────────────────────────────────────
             // Excluir la cita que se está editando (si aplica)
-            const otherAppts = state.appointments.filter(a => a.id !== aid);
+            const otherAppts = state.appointments.filter(a => a.id !== aid && !['cancelada','no_asistio'].includes(a.status));
 
             // 0) Respetar rangos ocupados manualmente. Una cita se considera de 60 min.
             const newStartMin = minutesOf(newTime);
@@ -1640,7 +1686,7 @@ window.printClinicalHistory = async function() {
             }
 
             // 1) Verificar si ya existe otra cita en la misma fecha y hora (cualquier paciente)
-            const sameSlot = otherAppts.find(a => a.date === newDate && a.time === newTime);
+            const sameSlot = otherAppts.find(a => {const start=minutesOf(a.time);return a.date===newDate&&start!==null&&newStartMin!==null&&start<newEndMin&&start+60>newStartMin;});
             if (sameSlot) {
                 alert(`⚠️ Horario ocupado\n\nYa existe una cita el ${newDate} a las ${newTime} para el paciente "${sameSlot.patientName}".\n\nPor favor elige otro horario.`);
                 return;
@@ -1873,10 +1919,10 @@ window.printClinicalHistory = async function() {
             let filtered = state.appointments.filter(a => a.date === dateFilter);
             if (state.filterStatus !== 'todas') filtered = filtered.filter(a => a.status === state.filterStatus);
             if (searchVal) filtered = filtered.filter(a =>
-                a.patientName.toLowerCase().includes(searchVal) ||
+                String(a.patientName || '').toLowerCase().includes(searchVal) ||
                 (a.notes || '').toLowerCase().includes(searchVal)
             );
-            filtered.sort((a, b) => a.time.localeCompare(b.time));
+            filtered.sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
 
             if (!filtered.length) {
                 container.innerHTML = `<div class="text-center p-8 bg-white rounded-2xl border border-graphite-100 text-graphite-400 text-sm">No hay citas programadas para este filtro o fecha.</div>`;
@@ -1929,12 +1975,12 @@ window.printClinicalHistory = async function() {
                                 </div>
                             </div>
                             <div class="v31-appointment-actions-primary">
-                                <button onclick="enviarRecordatorioWhatsapp('${a.id}')" title="Enviar recordatorio" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-message"></use></svg></button>
-                                <button onclick="editAppointment('${a.id}')" title="Editar cita" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-edit"></use></svg></button>
-                                <button onclick="deleteAppointment('${a.id}')" title="Cancelar cita" class="v31-icon-btn v31-danger"><svg class="v2-icon"><use href="#i-trash"></use></svg></button>
+                                <button onclick="enviarRecordatorioWhatsapp('${a.id}')" title="Enviar recordatorio" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-message"></use></svg><span>Recordar</span></button>
+                                <button onclick="editAppointment('${a.id}')" title="Editar cita" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-edit"></use></svg><span>Editar</span></button>
+                                <button onclick="deleteAppointment('${a.id}')" title="Cancelar cita" class="v31-icon-btn v31-danger"><svg class="v2-icon"><use href="#i-x"></use></svg><span>Cancelar</span></button>
                             </div>
                         </div>
-                        <p class="v31-appointment-note">${a.notes || 'Sin observaciones para esta sesión'}</p>
+                        <p class="v31-appointment-note">${escapeHTML(a.notes || 'Sin observaciones para esta sesión')}</p>
                         <div class="v31-appointment-footer">
                             <label><span>Estado</span>
                                 <select onchange="updateAppointmentStatus('${a.id}', this.value, this)" class="${statusSelectCls}">
@@ -2047,7 +2093,7 @@ window.printClinicalHistory = async function() {
                 return;
             }
             container.innerHTML = dates.map(dateStr => {
-                const apps = byDate[dateStr].sort((a, b) => a.time.localeCompare(b.time));
+                const apps = byDate[dateStr].sort((a, b) => String(a.time || '').localeCompare(String(b.time || '')));
                 let dayLabel = new Date(dateStr + 'T00:00:00').toLocaleDateString('es-PE', { weekday: 'long', day: 'numeric', month: 'long' });
                 dayLabel = dayLabel.charAt(0).toUpperCase() + dayLabel.slice(1);
                 const rows = apps.map(a => {

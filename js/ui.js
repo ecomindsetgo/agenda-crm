@@ -1486,14 +1486,12 @@ Reglas estrictas:
 
 /* base ui */
         function switchTab(target) {
-            ['citas','pacientes','finanzas'].forEach(t => {
-                document.getElementById('sec-' + t).classList.add('hidden');
-                document.getElementById('tab-' + t).className =
-                    "py-3.5 px-3 border-b-2 border-transparent text-slate-500 hover:text-slate-800 font-medium text-sm flex items-center gap-2 tab-transition";
+            document.querySelectorAll('#app-container > main > section[id^="sec-"]').forEach(sec => {
+                sec.classList.toggle('hidden', sec.id !== 'sec-' + target);
             });
-            document.getElementById('sec-' + target).classList.remove('hidden');
-            document.getElementById('tab-' + target).className =
-                "py-3.5 px-3 border-b-2 border-indigo-600 text-indigo-600 font-semibold text-sm flex items-center gap-2 tab-transition";
+            document.querySelectorAll('[data-v2-nav]').forEach(button => {
+                button.classList.toggle('v2-nav-active', button.dataset.v2Nav === target);
+            });
         }
 
         function setFilterStatus(status) {
@@ -2236,7 +2234,7 @@ function appointmentForm(){
       <div class="v35-grid-3">
         <div class="v35-field"><label>Tarifa *</label><select id="app-rate-type" onchange="updateAppointmentPricing()"><option value="sesion">Sesión individual</option><option value="paquete6">Paquete de 6 sesiones</option><option value="paquete8">Paquete de 8 sesiones</option></select></div>
         <div class="v35-field"><label id="app-cost-label">Precio (S/) *</label><input type="number" id="app-cost" min="0" step="0.50" value="50.00" required><span class="v35-help">Editable si necesitas ajustar la tarifa.</span></div>
-        <div class="v35-field"><label>Estado de pago *</label><select id="app-payment"><option value="pendiente">Pendiente de cobro</option><option value="pagado">Pagado</option></select></div>
+        <div class="v35-field"><label>Estado de pago *</label><select id="app-payment"><option value="pendiente">Pendiente de cobro</option><option value="parcial" disabled>Abono registrado</option><option value="pagado">Pagado</option></select></div>
       </div>
       <div id="app-package-info" class="hidden" style="margin-top:12px"></div>
     </section>
@@ -2385,7 +2383,7 @@ function wrapRouter(){
 function ensureFab(){
  const fab=q('#btn-fab-main'); if(fab) fab.setAttribute('aria-label','Crear nuevo');
 }
-function init(){installMoreSheet();rebuildMobileNav();ensureFab();wrapRouter();}
+function init(){if(window.__crmSimple)return;installMoreSheet();rebuildMobileNav();ensureFab();wrapRouter();}
 if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
 let tries=0;const t=setInterval(()=>{init();if(++tries>20)clearInterval(t)},250);
 })();
