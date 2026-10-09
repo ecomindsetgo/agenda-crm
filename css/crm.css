@@ -80,3 +80,13 @@
 @media(max-width:760px) {
   .v31-appointment-actions-primary .v85-delete-appointment { min-width:87px!important; justify-content:center!important; }
 }
+
+/* V8.6: acciones visibles en el panel efectivo de detalle de la cita */
+@media screen {
+.elo-destructive-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid #e7ece8}
+.elo-destructive-actions button{min-height:42px;justify-content:center}
+.elo-destructive-actions .elo-cancel-button{border-color:#e6d5b5;color:#755823;background:#fffaf0}
+.elo-destructive-actions .elo-delete-button{border-color:#efb9c1;color:#8d253a;background:#fff3f5;font-weight:800}
+.elo-destructive-actions .elo-delete-button:hover{background:#fbe2e7}
+@media(max-width:760px){.elo-destructive-actions{display:grid;grid-template-columns:1fr 1fr}.elo-destructive-actions button{min-width:0;padding:11px 8px}}
+}
