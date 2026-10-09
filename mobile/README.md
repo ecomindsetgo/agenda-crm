@@ -16,3 +16,5 @@ La preparación web no sustituye las pruebas ni el trabajo de integración nativ
 ## Integraciones de la versión 7
 
 Incluye también js/experience.js al preparar el directorio web. Las funciones de WhatsApp y asistente se despliegan por separado en Firebase, según ACTIVAR-WHATSAPP-E-IA.md. La automatización de WhatsApp no depende de mantener abierta la app, una vez desplegada y activada. El dictado actual usa las capacidades del navegador; la versión nativa deberá verificar voz, permisos y autenticación en dispositivos reales.
+
+En V8, WhatsApp es manual y el asistente utiliza la configuración original.
