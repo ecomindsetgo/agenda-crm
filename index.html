@@ -7,7 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css?v=pro-clinica-20261009-1">
+    <link rel="stylesheet" href="css/app.css?v=crm-pro-5">
+<link rel="stylesheet" href="css/crm.css?v=crm-pro-5">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#356b69">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col pb-20 md:pb-6">
 <svg aria-hidden="true" class="v2-svg-sprite" width="0" height="0" style="position:absolute;overflow:hidden">
@@ -335,9 +341,9 @@
 
             <!-- V2: CAJA DIARIA -->
             <section id="sec-caja" class="space-y-5 hidden">
-                <div class="v2-page-head"><div><span class="v2-eyebrow">Administración</span><h2>Caja diaria</h2><p>Conciliación automática basada en pagos de citas; no crea una base paralela ni duplica movimientos.</p></div><input type="date" id="v2-cash-date" class="v2-field" onchange="renderV2Cash()"></div>
+                <div class="v2-page-head"><div><span class="v2-eyebrow">Administración</span><h2>Caja diaria</h2><p>Revisa los cobros y saldos asociados a las citas de la fecha seleccionada.</p></div><input type="date" id="v2-cash-date" class="v2-field" onchange="renderV2Cash()"></div>
                 <div id="v2-cash-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-3"></div>
-                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5"><div class="v2-panel p-4 md:p-5"><h3 class="v2-section-title">Cobros registrados</h3><p class="v2-section-hint mb-3">Citas con estado de pago Pagado.</p><div id="v2-cash-paid"></div></div><div class="v2-panel p-4 md:p-5"><h3 class="v2-section-title">Pendiente de cobro</h3><p class="v2-section-hint mb-3">Atenciones del día aún pendientes.</p><div id="v2-cash-pending"></div></div></div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5"><div class="v2-panel p-4 md:p-5"><h3 class="v2-section-title">Cobros registrados</h3><p class="v2-section-hint mb-3">Cobros completos y abonos registrados.</p><div id="v2-cash-paid"></div></div><div class="v2-panel p-4 md:p-5"><h3 class="v2-section-title">Pendiente de cobro</h3><p class="v2-section-hint mb-3">Atenciones del día aún pendientes.</p><div id="v2-cash-pending"></div></div></div>
             </section>
 
             <!-- V2: CENTRO DE ALERTAS -->
@@ -1727,9 +1733,11 @@
 
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script type="module" src="js/app.js?v=pro-clinica-20261009-1"></script>
-    <script src="js/ui.js?v=pro-clinica-20261009-1"></script>
-    <script src="js/tasks.js?v=pro-clinica-20261009-1" defer></script>
+    <script src="js/crm-core.js?v=crm-pro-5"></script>
+    <script type="module" src="js/app.js?v=crm-pro-5"></script>
+    <script src="js/ui.js?v=crm-pro-5"></script>
+    <script src="js/tasks.js?v=crm-pro-5" defer></script>
+    <script src="js/crm-platform.js?v=crm-pro-5" defer></script>
 <div id="ct-overlay" class="ct-overlay no-print"><section class="ct-dialog" role="dialog" aria-modal="true" aria-labelledby="ct-title"><div class="ct-head"><h2 id="ct-title">Tareas de mi consultorio</h2><button id="ct-close" type="button" aria-label="Cerrar tareas">✕</button></div><p>Organiza tus pendientes administrativos. Se guardan en este navegador por cuenta.</p><form id="ct-form" class="ct-form"><label>Actividad<input id="ct-text" required maxlength="180" placeholder="Ej. Revisar los cobros de la semana"></label><label>Fecha límite<input id="ct-date" type="date"></label><button type="submit">＋ Agregar tarea</button></form><label class="ct-filter">Mostrar<select id="ct-filter"><option value="pending">Pendientes</option><option value="all">Todas</option><option value="done">Completadas</option></select></label><div id="ct-list"></div></section></div>
 </body>
 </html>

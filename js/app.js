@@ -18,6 +18,10 @@
             mostrarErrorGlobal('⚠️ Error: ' + detalle + '. Si persiste, contacta a soporte.');
         });
 
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app-check.js";
 import {
@@ -76,6 +80,8 @@ if (app) {
 
         let state = {
             appointments: [],
+            appointmentsReady: false,
+            patientsReady: false,
             patients: [],
             histories: [],
             notes:[],
@@ -379,6 +385,8 @@ if (app) {
                 }
             } else {
                 state.currentUser = null;
+                state.appointmentsReady = false;
+                state.patientsReady = false;
                 document.getElementById('auth-screen').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
                 document.getElementById('app-container').classList.remove('flex');
@@ -410,11 +418,14 @@ if (app) {
 
         // ─── FIRESTORE SYNC ───────────────────────────────────────────────────────
         function setupFirestoreSync(userId) {
+            state.appointmentsReady = false;
+            state.patientsReady = false;
             const appointmentsRef = collection(db, 'artifacts', appId, 'users', userId, 'appointments');
             const patientsRef     = collection(db, 'artifacts', appId, 'users', userId, 'patients');
             const historiesRef = collection(db, 'artifacts', appId, 'users', userId, 'clinicalHistories');
             const notesRef = collection(db, 'artifacts', appId, 'users', userId, 'clinicalNotes');
             const unsubAppts = onSnapshot(appointmentsRef, (snapshot) => {
+                state.appointmentsReady = true;
                 const appointmentDocs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 // Los bloqueos manuales se guardan en la misma colección permitida por
                 // las reglas actuales, pero se separan de las citas para no contaminar
@@ -430,6 +441,7 @@ if (app) {
             });
 
             const unsubPatients = onSnapshot(patientsRef, (snapshot) => {
+                state.patientsReady = true;
                 state.patients = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderPatients();
                 updatePatientDropdowns();
@@ -490,13 +502,13 @@ id:doc.id,
         });
 
         window.deletePatient = async function(pid) {
-            if (state.appointments.some(a => a.patientId === pid)) {
-                alert("No se puede eliminar: el paciente tiene citas vinculadas.");
-                return;
-            }
-            if (confirm("¿Eliminar la ficha de este paciente?")) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid));
-            }
+            if (!state.currentUser) return;
+            if (!confirm('¿Archivar este paciente como inactivo? Sus citas, historia clínica y documentos se conservarán. Puedes reactivarlo cambiando su estado en el CRM.')) return;
+            try {
+                await updateDoc(doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid), {
+                    leadStatus: 'inactivo', archivedAt: new Date().toISOString(), updatedBy: state.currentUser.uid
+                });
+            } catch (error) { alert('No se pudo archivar el paciente: ' + error.message); }
         };
 
         // V2: actualización CRM compatible con la colección actual de pacientes.
@@ -520,14 +532,14 @@ id:doc.id,
             if (!state.currentUser) throw new Error('Sesión no disponible');
             if (!pid || !patch || typeof patch !== 'object') throw new Error('Actualización inválida');
             const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
-            await setDoc(ref, { ...patch, v3UpdatedAt: new Date().toISOString() }, { merge: true });
+            await setDoc(ref, { ...patch, v3UpdatedAt: new Date().toISOString(), updatedBy: state.currentUser.uid }, { merge: true });
         };
 
         window.updateAppointmentV3 = async function(aid, patch) {
             if (!state.currentUser) throw new Error('Sesión no disponible');
             if (!aid || !patch || typeof patch !== 'object') throw new Error('Actualización inválida');
             const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-            await setDoc(ref, { ...patch, v3UpdatedAt: new Date().toISOString() }, { merge: true });
+            await setDoc(ref, { ...patch, v3UpdatedAt: new Date().toISOString(), updatedBy: state.currentUser.uid }, { merge: true });
         };
 function clinicalHistoryCode(patientId, history = {}) {
     return /^HC-\d{4}$/.test(history.code || '') && Number(history.code.slice(3)) >= 101 ? history.code : '';
@@ -726,9 +738,9 @@ window.newClinicalNote = function(note = {}) {
     div.innerHTML = `
         <div class="grid md:grid-cols-2 gap-3">
             <div><label class="font-semibold">Fecha</label><input type="date" class="note-date w-full border rounded-lg p-2" value="${note.fecha || new Date().toISOString().split("T")[0]}"></div>
-            <div><label class="font-semibold">Sesión</label><input type="text" class="note-session w-full border rounded-lg p-2" value="${note.sesion || ""}" placeholder="Sesión 1"></div>
+            <div><label class="font-semibold">Sesión</label><input type="text" class="note-session w-full border rounded-lg p-2" value="${escapeHTML(note.sesion || "")}" placeholder="Sesión 1"></div>
         </div>
-        <div class="mt-3"><label class="font-semibold">Evolución Clínica</label><textarea class="note-text w-full border rounded-xl p-3 mt-2" rows="5">${note.evolucion || ""}</textarea></div>
+        <div class="mt-3"><label class="font-semibold">Evolución Clínica</label><textarea class="note-text w-full border rounded-xl p-3 mt-2" rows="5">${escapeHTML(note.evolucion || "")}</textarea></div>
         <div class="text-right mt-3"><button type="button" onclick="deleteClinicalNoteCard('${id}', this)" class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded-lg">Eliminar</button></div>`;
     document.getElementById("clinical-notes-container").appendChild(div);
 };
@@ -1030,73 +1042,7 @@ window.printClinicalHistory = async function() {
         }
 
         function computeFinanceMetrics(apps) {
-            const m = {
-                PEN: emptyMoneyBucket(),
-                USD: emptyMoneyBucket(),
-                citas: 0, completadas: 0, canceladas: 0, programadas: 0,
-                citasPagadas: 0, citasPorCobrar: 0,
-                presencial: 0, virtual: 0,
-                individual: 0, pareja: 0,
-                sesionSuelta: 0, sesionPaquete: 0,
-                _pacientes: new Set()
-            };
-
-            (apps || []).forEach(a => {
-                const cur  = isUsdAppt(a) ? 'USD' : 'PEN';
-                const b    = m[cur];
-                const cost = Number(a.cost || 0);
-
-                m.citas++;
-                if (a.patientId) m._pacientes.add(a.patientId);
-                if (a.modality === 'virtual') m.virtual++; else m.presencial++;
-                if (a.attentionType === 'pareja') m.pareja++; else m.individual++;
-                if (a.packageId) m.sesionPaquete++; else m.sesionSuelta++;
-
-                if (a.status === 'cancelada') {
-                    m.canceladas++;
-                    b.perdido += cost;
-                    return; // una cita cancelada no factura ni se cobra
-                }
-
-                if (a.status === 'completada') { m.completadas++; b.devengado += cost; }
-                else                           { m.programadas++; }
-
-                b.facturado += cost;
-
-                if (a.paymentStatus === 'pagado') {
-                    b.cobrado += cost;
-                    if (cost > 0) m.citasPagadas++;
-                } else {
-                    b.porCobrar += cost;
-                    if (cost > 0) m.citasPorCobrar++;
-                    if (a.status === 'completada') b.vencido += cost; else b.futuro += cost;
-                }
-            });
-
-            m.pacientesUnicos = m._pacientes.size;
-
-            // Tasa de cobranza: cuánto de lo facturado ya está efectivamente cobrado.
-            const facturadoTot = m.PEN.facturado + m.USD.facturado;
-            const cobradoTot   = m.PEN.cobrado   + m.USD.cobrado;
-            m.tasaCobranzaPEN = m.PEN.facturado > 0 ? (m.PEN.cobrado / m.PEN.facturado) * 100 : 0;
-            m.tasaCobranzaUSD = m.USD.facturado > 0 ? (m.USD.cobrado / m.USD.facturado) * 100 : 0;
-            m.tasaCobranza    = facturadoTot > 0 ? (cobradoTot / facturadoTot) * 100 : 0;
-
-            // Ticket promedio: sobre citas facturables (no canceladas) y con monto > 0,
-            // porque las sesiones incluidas en un paquete ya pagado valen 0 y
-            // distorsionarían el promedio hacia abajo.
-            const facturables = (apps || []).filter(a => a.status !== 'cancelada' && Number(a.cost || 0) > 0);
-            const tickPen = facturables.filter(isPenAppt);
-            const tickUsd = facturables.filter(isUsdAppt);
-            m.ticketPromedioPEN = tickPen.length ? tickPen.reduce((s, a) => s + Number(a.cost || 0), 0) / tickPen.length : 0;
-            m.ticketPromedioUSD = tickUsd.length ? tickUsd.reduce((s, a) => s + Number(a.cost || 0), 0) / tickUsd.length : 0;
-
-            // Tasa de asistencia sobre las citas ya resueltas (completadas + canceladas).
-            const resueltas = m.completadas + m.canceladas;
-            m.tasaAsistencia = resueltas ? (m.completadas / resueltas) * 100 : 0;
-            m.tasaCancelacion = resueltas ? (m.canceladas / resueltas) * 100 : 0;
-
-            return m;
+            return window.CRMCore.metrics(apps);
         }
         window.computeFinanceMetrics = computeFinanceMetrics;
 
@@ -1168,11 +1114,10 @@ window.printClinicalHistory = async function() {
         // Sólo cuenta citas ya COMPLETADAS con pago pendiente: son cobros que
         // realmente están vencidos, no expectativas de citas futuras.
         function computeReceivables(apps) {
-            const byPatient = {};
+            const byPatient = Object.create(null);
             (apps || [])
                 .filter(a => a.status === 'completada'
-                          && a.paymentStatus === 'pendiente'
-                          && Number(a.cost || 0) > 0)
+                          && window.CRMCore.remaining(a) > 0)
                 .forEach(a => {
                     const key = a.patientId || a.patientName || 'sin-id';
                     if (!byPatient[key]) {
@@ -1184,7 +1129,7 @@ window.printClinicalHistory = async function() {
                     }
                     const r = byPatient[key];
                     r.sesiones++;
-                    if (isUsdAppt(a)) r.usd += Number(a.cost || 0); else r.pen += Number(a.cost || 0);
+                    if (isUsdAppt(a)) r.usd += window.CRMCore.remaining(a); else r.pen += window.CRMCore.remaining(a);
                     if (a.date < r.masAntigua)  r.masAntigua  = a.date;
                     if (a.date > r.masReciente) r.masReciente = a.date;
                 });
@@ -1196,13 +1141,13 @@ window.printClinicalHistory = async function() {
             // El 3.7 es sólo un factor de referencia para ORDENAR la lista cuando
             // hay deudas mixtas en S/ y $. Nunca se usa para sumar ni mostrar montos:
             // cada moneda se reporta siempre por separado.
-            }).sort((a, b) => (b.pen + b.usd * 3.7) - (a.pen + a.usd * 3.7));
+            }).sort((a, b) => (b.pen - a.pen) || (b.usd - a.usd));
         }
         window.computeReceivables = computeReceivables;
 
         // ─── TOP PACIENTES POR INGRESO COBRADO ────────────────────────────────
         function computeTopPatients(apps, limit) {
-            const byPatient = {};
+            const byPatient = Object.create(null);
             (apps || []).filter(a => a.status !== 'cancelada').forEach(a => {
                 const key = a.patientId || a.patientName || 'sin-id';
                 if (!byPatient[key]) byPatient[key] = { nombre: a.patientName || 'Paciente', sesiones: 0, cobradoPen: 0, cobradoUsd: 0, pendientePen: 0, pendienteUsd: 0 };
@@ -1210,8 +1155,8 @@ window.printClinicalHistory = async function() {
                 if (a.status === 'completada') r.sesiones++;
                 const cost = Number(a.cost || 0);
                 const usd  = isUsdAppt(a);
-                if (a.paymentStatus === 'pagado') { if (usd) r.cobradoUsd += cost; else r.cobradoPen += cost; }
-                else                              { if (usd) r.pendienteUsd += cost; else r.pendientePen += cost; }
+                if (usd) { r.cobradoUsd += window.CRMCore.paid(a); r.pendienteUsd += window.CRMCore.remaining(a); }
+                else { r.cobradoPen += window.CRMCore.paid(a); r.pendientePen += window.CRMCore.remaining(a); }
             });
             return Object.values(byPatient)
                 .filter(r => r.sesiones > 0 || r.cobradoPen > 0 || r.cobradoUsd > 0)
@@ -1797,18 +1742,10 @@ window.printClinicalHistory = async function() {
         });
 
         window.deleteAppointment = async function(aid) {
-            if (confirm("¿Remover esta cita?")) {
-                const a = state.appointments.find(x => x.id === aid);
-                if (a && a.packageId && a.packageConsumed) {
-                    await adjustPackageSession(a.patientId, a.packageId, -1);
-                }
-                if (a && a.calendlyCancelUrl) {
-                    if (confirm("Esta cita viene de Calendly. ¿Abrir la página de cancelación para cancelarla también allá? (Recomendado, así el paciente es notificado y el evento se borra del Calendar)")) {
-                        window.open(a.calendlyCancelUrl, '_blank');
-                    }
-                }
-                await deleteDoc(doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid));
-            }
+            const appointment = state.appointments.find(a => a.id === aid);
+            if (!state.currentUser || !appointment) return;
+            if (!confirm('¿Cancelar esta cita? Se conservará el registro y los cobros registrados. La cancelación no genera un reembolso automático.')) return;
+            await window.updateAppointmentStatus(aid, 'cancelada');
         };
 
         window.quickToggleStatus = async function(aid, currentStatus) {
@@ -1829,7 +1766,7 @@ window.printClinicalHistory = async function() {
             if (oldStatus === newStatus) return;
             try {
                 const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-                await updateDoc(ref, { status: newStatus, statusUpdatedAt: new Date().toISOString() });
+                await updateDoc(ref, { status: newStatus, statusUpdatedAt: new Date().toISOString(), updatedBy: state.currentUser.uid });
                 await syncPackageOnStatusChange(a, oldStatus, newStatus);
             } catch (err) {
                 console.error('Error al actualizar estado:', err);
@@ -1846,7 +1783,7 @@ window.printClinicalHistory = async function() {
             const newPaymentStatus = a.paymentStatus === 'pagado' ? 'pendiente' : 'pagado';
             try {
                 const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
-                await updateDoc(ref, { paymentStatus: newPaymentStatus, paymentUpdatedAt: new Date().toISOString() });
+                await updateDoc(ref, { paymentStatus: newPaymentStatus, paidAmount: newPaymentStatus === 'pagado' ? window.CRMCore.cost(a) : 0, paymentUpdatedAt: new Date().toISOString(), updatedBy: state.currentUser.uid });
             } catch (err) {
                 console.error('Error al actualizar estado de pago:', err);
                 alert('⚠️ No se pudo actualizar el estado de pago.');
@@ -1984,7 +1921,7 @@ window.printClinicalHistory = async function() {
                     <div class="v31-appointment-content">
                         <div class="v31-appointment-top">
                             <div>
-                                <h4>${a.patientName}</h4>
+                                <h4>${escapeHTML(a.patientName)}</h4>
                                 <div class="v31-badge-row">
                                     <span class="v31-status-badge ${badge}">${statusTextMap[a.status] || String(a.status || 'AGENDADA').toUpperCase()}</span>
                                     ${modalityBadge.replace('text-xs font-semibold px-2 py-0.5 rounded-xl border','v31-status-badge')}
@@ -1994,7 +1931,7 @@ window.printClinicalHistory = async function() {
                             <div class="v31-appointment-actions-primary">
                                 <button onclick="enviarRecordatorioWhatsapp('${a.id}')" title="Enviar recordatorio" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-message"></use></svg></button>
                                 <button onclick="editAppointment('${a.id}')" title="Editar cita" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-edit"></use></svg></button>
-                                <button onclick="deleteAppointment('${a.id}')" title="Eliminar cita" class="v31-icon-btn v31-danger"><svg class="v2-icon"><use href="#i-trash"></use></svg></button>
+                                <button onclick="deleteAppointment('${a.id}')" title="Cancelar cita" class="v31-icon-btn v31-danger"><svg class="v2-icon"><use href="#i-trash"></use></svg></button>
                             </div>
                         </div>
                         <p class="v31-appointment-note">${a.notes || 'Sin observaciones para esta sesión'}</p>
@@ -2123,7 +2060,7 @@ window.printClinicalHistory = async function() {
                     return `<div class="flex items-center justify-between py-1.5 border-b border-graphite-50 last:border-0">
                         <div class="flex items-center gap-2 flex-wrap">
                             <span class="text-xs font-bold text-graphite-600 bg-graphite-100 px-2 py-0.5 rounded-lg">${a.time}</span>
-                            <span class="text-sm font-semibold text-graphite-700">${modalityIcon} ${a.patientName}</span>
+                            <span class="text-sm font-semibold text-graphite-700">${modalityIcon} ${escapeHTML(a.patientName)}</span>
                             <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${(a.status || 'programada').toUpperCase()}</span>
                         </div>
                         <span class="text-xs font-semibold text-graphite-500">${formatApptCostLabel(a)}</span>
@@ -2240,7 +2177,7 @@ window.printClinicalHistory = async function() {
                 <div class="bg-white p-5 rounded-3xl border border-sage-100/70 card-soft flex flex-col justify-between space-y-3">
                     <div class="space-y-2">
                         <div class="flex justify-between items-start">
-                            <h4 class="font-bold text-graphite-800 text-base">${p.name}</h4>
+                            <h4 class="font-bold text-graphite-800 text-base">${escapeHTML(p.name)}</h4>
                             <span class="text-xs bg-graphite-100 text-graphite-600 px-2.5 py-1 rounded-xl">📞 ${p.phone}</span>
                         </div>
                         <p class="text-xs text-graphite-500"><strong>Nacimiento:</strong> ${p.birth || 'No especificada'}</p>
@@ -2268,7 +2205,7 @@ window.printClinicalHistory = async function() {
                 (a.name || '').localeCompare(b.name || '', 'es', { sensitivity: 'base' })
             );
             select.innerHTML = sortedPatients.length
-                ? sortedPatients.map(p => `<option value="${p.id}">${p.name}</option>`).join('')
+                ? sortedPatients.map(p => `<option value="${p.id}">${escapeHTML(p.name)}</option>`).join('')
                 : '<option value="">-- No hay pacientes registrados --</option>';
         }
 
@@ -2419,8 +2356,8 @@ window.printClinicalHistory = async function() {
             document.getElementById('stat-citas-ingresos').innerText   = `S/ ${ingresosHoy.toFixed(2)}` + (ingresosHoyUsd > 0 ? ` (+ $ ${ingresosHoyUsd.toFixed(2)})` : '');
 
             // Recaudación Real: solo las citas del día que ya están efectivamente pagadas.
-            const ingresosHoyReal = todayApps.filter(a => a.paymentStatus === 'pagado' && isPenAppt(a)).reduce((s, a) => s + a.cost, 0);
-            const ingresosHoyRealUsd = todayApps.filter(a => a.paymentStatus === 'pagado' && isUsdAppt(a)).reduce((s, a) => s + a.cost, 0);
+            const ingresosHoyReal = todayApps.filter(isPenAppt).reduce((s, a) => s + window.CRMCore.paid(a), 0);
+            const ingresosHoyRealUsd = todayApps.filter(isUsdAppt).reduce((s, a) => s + window.CRMCore.paid(a), 0);
             const elIngresosReal = document.getElementById('stat-citas-ingresos-real');
             if (elIngresosReal) {
                 elIngresosReal.innerText = `S/ ${ingresosHoyReal.toFixed(2)}` + (ingresosHoyRealUsd > 0 ? ` (+ $ ${ingresosHoyRealUsd.toFixed(2)})` : '');
@@ -2548,7 +2485,7 @@ window.printClinicalHistory = async function() {
             container.innerHTML = todayApps.slice(0, 8).map(a => `
                 <div class="flex items-center justify-between gap-3 py-2.5 border-b border-graphite-100 last:border-0">
                     <div class="min-w-0">
-                        <p class="text-sm font-semibold text-graphite-800 truncate">${a.patientName}</p>
+                        <p class="text-sm font-semibold text-graphite-800 truncate">${escapeHTML(a.patientName)}</p>
                         <p class="text-xs text-graphite-400">⏰ ${(a.time || '').slice(0, 5)}</p>
                     </div>
                     ${badge(a.status)}
@@ -3243,7 +3180,7 @@ window.printClinicalHistory = async function() {
                         <tr class="border-b">
                             <td class="py-2.5 px-2 font-bold whitespace-nowrap">${a.date}</td>
                             <td class="py-2.5 px-2 font-bold">${a.time}</td>
-                            <td class="py-2.5 px-2 font-semibold">${a.patientName}</td>
+                            <td class="py-2.5 px-2 font-semibold">${escapeHTML(a.patientName)}</td>
                             <td class="py-2.5 px-2">${modalityLabel(a)}</td>
                         </tr>`).join('')
                     : `<tr><td colspan="4" class="py-4 text-center text-graphite-400">No hay consultas agendadas para este periodo.</td></tr>`;
@@ -3253,7 +3190,7 @@ window.printClinicalHistory = async function() {
                     ? reportApps.map(a => `
                         <tr class="border-b">
                             <td class="py-2.5 px-2 font-bold">${a.time}</td>
-                            <td class="py-2.5 px-2 font-semibold">${a.patientName}</td>
+                            <td class="py-2.5 px-2 font-semibold">${escapeHTML(a.patientName)}</td>
                             <td class="py-2.5 px-2">${modalityLabel(a)}</td>
                         </tr>`).join('')
                     : `<tr><td colspan="3" class="py-4 text-center text-graphite-400">No hay consultas agendadas para esta fecha.</td></tr>`;
@@ -3287,7 +3224,7 @@ window.printClinicalHistory = async function() {
             document.getElementById('hist-modal-subtitle').innerText = p.phone + (p.birth ? '  •  ' + p.birth : '') + (p.age ? '  •  Edad: ' + p.age : '');
 
             document.getElementById('hist-patient-info').innerHTML = `
-                <div><span class="font-bold text-graphite-500 text-xs uppercase block mb-0.5">Nombre</span><span class="font-semibold">${p.name}</span></div>
+                <div><span class="font-bold text-graphite-500 text-xs uppercase block mb-0.5">Nombre</span><span class="font-semibold">${escapeHTML(p.name)}</span></div>
                 <div><span class="font-bold text-graphite-500 text-xs uppercase block mb-0.5">Teléfono</span><span>${p.phone}</span></div>
                 <div><span class="font-bold text-graphite-500 text-xs uppercase block mb-0.5">Nacimiento</span><span>${p.birth || '—'}</span></div>
                 <div><span class="font-bold text-graphite-500 text-xs uppercase block mb-0.5">Edad</span><span>${ageStr}</span></div>

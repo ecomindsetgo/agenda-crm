@@ -1,0 +1,20 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    match /artifacts/psicologia-agenda-default-v2/users/{userId}/appointments/{id} {
+      allow read, write: if owner(userId);
+    }
+    match /artifacts/psicologia-agenda-default-v2/users/{userId}/patients/{id} {
+      allow read, write: if owner(userId);
+    }
+    match /artifacts/psicologia-agenda-default-v2/users/{userId}/clinicalHistories/{id} {
+      allow read, write: if owner(userId);
+    }
+    match /artifacts/psicologia-agenda-default-v2/users/{userId}/clinicalNotes/{id} {
+      allow read, write: if owner(userId);
+    }
+  }
+}
