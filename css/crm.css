@@ -73,3 +73,10 @@
   #app-container, #auth-screen, #loading-screen, .v2-mobile-nav {display:none!important}
   #print-section:not(.hidden),#print-section-finance:not(.hidden),#print-section-reception:not(.hidden),#print-patient-card:not(.hidden),#print-clinical-history:not(.hidden),#crm-report-print:not(.hidden){visibility:visible!important}
 }
+
+/* V8.5: dar visibilidad a eliminar sin desplazar el detalle en móviles. */
+.v31-appointment-actions-primary .v85-delete-appointment { border-color:#eabcc2!important; background:#fff7f8!important; color:#8a2639!important; }
+.v31-appointment-actions-primary .v85-delete-appointment:hover { background:#fbe5e8!important; }
+@media(max-width:760px) {
+  .v31-appointment-actions-primary .v85-delete-appointment { min-width:87px!important; justify-content:center!important; }
+}

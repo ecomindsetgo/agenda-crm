@@ -1799,6 +1799,52 @@ window.printClinicalHistory = async function() {
             await window.updateAppointmentStatus(aid, 'cancelada');
         };
 
+        // Eliminación excepcional para citas creadas por error. Las citas con
+        // actividad clínica, pagos o paquetes se cancelan y conservan.
+        window.removeAppointmentPermanently = async function(aid) {
+            if (!state.currentUser) return;
+            const a = state.appointments.find(x => x.id === aid);
+            if (!a) { alert('La cita ya no está disponible.'); return; }
+            if (!confirm('Esta opción elimina la cita de la agenda y solicitará a la función de Google Calendar borrar su evento. Úsala solo para citas registradas por error. ¿Continuar?')) return;
+            const answer = prompt('Para confirmar, escribe ELIMINAR (en mayúsculas):');
+            if (answer !== 'ELIMINAR') return;
+            const root = ['artifacts', appId, 'users', state.currentUser.uid];
+            const ref = doc(db, ...root, 'appointments', aid);
+            const logRef = doc(db, ...root, 'appointmentDeletionAudit', 'del_' + aid);
+            try {
+                await runTransaction(db, async tx => {
+                    const snapshot = await tx.get(ref);
+                    if (!snapshot.exists()) throw new Error('Esta cita ya fue eliminada.');
+                    const original = snapshot.data();
+                    const paid = Number(original.paidAmount || 0);
+                    const financialHistory = Array.isArray(original.paymentHistory) ? original.paymentHistory : [];
+                    if (paid > 0 || financialHistory.length > 0 || original.paymentStatus === 'pagado' || original.paymentStatus === 'parcial') throw new Error('Tiene movimientos financieros. Cancela la cita; no la elimines.');
+                    if (original.packageId || original.packageConsumed) throw new Error('La cita está vinculada a un paquete. Debes cancelarla para preservar la trazabilidad.');
+                    if (['completada','in_session','arrived'].includes(original.status)) throw new Error('La cita tiene actividad asistencial. Debes conservarla y cambiar su estado.');
+                    if (String(original.notes || '').trim()) throw new Error('La cita tiene notas registradas. Cancélala para conservar la información clínica.');
+                    const audit = {
+                        appointmentId: aid,
+                        patientId: original.patientId || null,
+                        patientName: original.patientName || null,
+                        date: original.date || null,
+                        time: original.time || null,
+                        status: original.status || null,
+                        googleEventId: original.googleEventId || null,
+                        deletedAt: new Date().toISOString(),
+                        deletedBy: state.currentUser.uid,
+                        reason: 'Cita creada por error',
+                        calendarDeletion: 'pending-cloud-function'
+                    };
+                    tx.set(logRef, audit);
+                    tx.delete(ref);
+                });
+                alert('La cita fue eliminada de Firebase y la solicitud de eliminación en Google Calendar fue activada. Comprueba el evento en Google Calendar; su eliminación es asíncrona.');
+            } catch (error) {
+                console.error('No se pudo eliminar la cita:', error);
+                alert('No se eliminó la cita: ' + (error.message || 'Error desconocido') + '. Verifica los permisos de Firebase si corresponde.');
+            }
+        };
+
         // Toda transición de estado deja un evento con autor y valor anterior.
         window.quickToggleStatus = async function(aid, currentStatus) {
             const next = { pendiente: 'completada', completada: 'cancelada', cancelada: 'pendiente' };
@@ -1992,6 +2038,7 @@ window.printClinicalHistory = async function() {
                                 <button onclick="enviarRecordatorioWhatsapp('${a.id}')" title="Enviar recordatorio" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-message"></use></svg><span>Recordar</span></button>
                                 <button onclick="editAppointment('${a.id}')" title="Editar cita" class="v31-icon-btn"><svg class="v2-icon"><use href="#i-edit"></use></svg><span>Editar</span></button>
                                 <button onclick="deleteAppointment('${a.id}')" title="Cancelar cita" class="v31-icon-btn v31-danger"><svg class="v2-icon"><use href="#i-x"></use></svg><span>Cancelar</span></button>
+                                <button onclick="removeAppointmentPermanently('${a.id}')" title="Eliminar cita registrada por error; solo si no tiene cobros, paquetes ni notas" aria-label="Eliminar cita registrada por error" class="v31-icon-btn v31-danger v85-delete-appointment"><svg class="v2-icon"><use href="#i-trash-2"></use></svg><span>Eliminar</span></button>
                             </div>
                         </div>
                         <p class="v31-appointment-note">${escapeHTML(a.notes || 'Sin observaciones para esta sesión')}</p>
@@ -3502,7 +3549,7 @@ window.printClinicalHistory = async function() {
 
                     if (manualBlock) {
                         const safeReason=String(manualBlock.reason||'Bloqueo manual').replace(/["<>]/g,'');
-                        html += `<div title="${safeReason}" class="v23-manual-slot"><span>Bloqueado</span><small>${manualBlock.blockStart}–${manualBlock.blockEnd}</small></div>`;
+                        html += `<div title="${safeReason}" class="v23-manual-slot"><span>Ocupado</span><small>${manualBlock.blockStart}–${manualBlock.blockEnd}</small></div>`;
                     } else if (citaSlot) {
                         html += `<div title="${String(citaSlot.patientName||'Cita').replace(/["<>]/g,'')}" class="v23-appt-slot"><span>Ocupado</span><small>${String(citaSlot.patientName||'Cita').replace(/[<>]/g,'')}</small></div>`;
                     } else if (bloqueadoPorDefecto || yaPaso) {

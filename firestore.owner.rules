@@ -10,6 +10,11 @@ service cloud.firestore {
     match /artifacts/psicologia-agenda-default-v2/users/{userId}/appointments/{id} {
       allow read, write: if owner(userId);
     }
+    match /artifacts/psicologia-agenda-default-v2/users/{userId}/appointmentDeletionAudit/{id} {
+      allow read: if owner(userId);
+      allow create: if owner(userId) && request.resource.data.deletedBy == request.auth.uid;
+      allow update, delete: if false;
+    }
     match /artifacts/psicologia-agenda-default-v2/users/{userId}/patients/{id} {
       allow read, write: if owner(userId);
     }
