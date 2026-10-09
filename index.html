@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css?v=20261007-V4">
+    <link rel="stylesheet" href="css/app.css?v=pro-clinica-20261009-1">
 </head>
 <body class="text-slate-800 min-h-screen flex flex-col pb-20 md:pb-6">
 <svg aria-hidden="true" class="v2-svg-sprite" width="0" height="0" style="position:absolute;overflow:hidden">
@@ -254,6 +254,7 @@
                 <button data-v2-nav="caja" onclick="switchTab('caja')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-money"></use></svg><span>Caja diaria</span></button>
                 <button data-v2-nav="alertas" onclick="switchTab('alertas')" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-bell"></use></svg><span>Alertas</span></button>
                 <button onclick="openPrintModal()" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-report"></use></svg><span>Reportes</span></button>
+                <button type="button" onclick="openConsultorioTasks()" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-check"></use></svg><span>Tareas</span></button>
                 <div class="v2-sidebar-label">Inteligencia</div>
                 <button onclick="openAssistantModal()" class="py-3 px-3 text-sm flex items-center gap-2"><svg class="v2-icon"><use href="#i-spark"></use></svg><span>Asistente IA</span></button>
             </div>
@@ -1193,7 +1194,7 @@
         <div class="overflow-y-auto max-h-[80vh] p-6 bg-slate-50">
             <input type="hidden" id="hc-patient-id">
 
-            <div class="hc-form-section">
+            <div class="hc-form-section"><label class="hc-label">Código de historia clínica</label><input id="hc-code" class="hc-input" readonly></div><div class="hc-form-section">
                 <div class="hc-section-title">DATOS GENERALES</div>
                 <div class="grid md:grid-cols-2 gap-x-5 gap-y-4">
                     <div><label class="hc-label">Nombre completo</label><input id="hc-patient-name" class="hc-input bg-slate-100" readonly></div>
@@ -1566,7 +1567,7 @@
             <div class="hc-wave hc-wave-top"></div>
             <div class="hc-print-content">
                 <div class="hc-print-brand"><img src="assets/logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga"></div>
-                <h1>HISTORIA CLÍNICA PSICOLÓGICA</h1>
+                <h1>HISTORIA CLÍNICA PSICOLÓGICA</h1><div class="hc-code-print">Código: <strong id="pch-code"></strong></div>
                 <section><h2>DATOS GENERALES</h2><div class="hc-data-grid">
                     <div><b>Nombre completo</b><span id="pch-name"></span></div><div><b>Fecha de Primera sesión</b><span id="pch-first-session"></span></div>
                     <div><b>Fecha de nacimiento</b><span id="pch-birth"></span></div><div><b>Edad</b><span id="pch-age"></span></div>
@@ -1584,7 +1585,6 @@
         <div class="hc-print-page hc-page-2">
             <div class="hc-wave hc-wave-top"></div><div class="hc-print-content hc-continuation">
                 <div class="hc-print-brand"><img src="assets/logo-lisbeth.png" alt="Lisbeth Méndez Psicóloga"></div>
-                <section><h2>HISTORIA PERSONAL RELEVANTE</h2><p id="pch-historia-personal-2"></p></section>
                 <section><h2>VÍNCULOS Y RELACIONES <small>¿Cómo son sus relaciones actualmente? ¿Qué patrones se repiten? ¿Qué suele necesitar emocionalmente?</small></h2><p id="pch-vinculos"></p></section>
                 <section><h2>TÉCNICAS E INSTRUMENTOS APLICADOS</h2><p id="pch-tecnicas"></p></section>
                 <section><h2>OBSERVACIÓN DE CONDUCTA <small>Actitud en sesión / Nivel de apertura · Resistencias / Insight</small></h2><p id="pch-conducta"></p></section>
@@ -1727,7 +1727,9 @@
 
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script type="module" src="js/app.js?v=20261007-V4"></script>
-    <script src="js/ui.js?v=20261007-V4"></script>
+    <script type="module" src="js/app.js?v=pro-clinica-20261009-1"></script>
+    <script src="js/ui.js?v=pro-clinica-20261009-1"></script>
+    <script src="js/tasks.js?v=pro-clinica-20261009-1" defer></script>
+<div id="ct-overlay" class="ct-overlay no-print"><section class="ct-dialog" role="dialog" aria-modal="true" aria-labelledby="ct-title"><div class="ct-head"><h2 id="ct-title">Tareas de mi consultorio</h2><button id="ct-close" type="button" aria-label="Cerrar tareas">✕</button></div><p>Organiza tus pendientes administrativos. Se guardan en este navegador por cuenta.</p><form id="ct-form" class="ct-form"><label>Actividad<input id="ct-text" required maxlength="180" placeholder="Ej. Revisar los cobros de la semana"></label><label>Fecha límite<input id="ct-date" type="date"></label><button type="submit">＋ Agregar tarea</button></form><label class="ct-filter">Mostrar<select id="ct-filter"><option value="pending">Pendientes</option><option value="all">Todas</option><option value="done">Completadas</option></select></label><div id="ct-list"></div></section></div>
 </body>
 </html>

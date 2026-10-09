@@ -27,7 +27,7 @@ import {
     EmailAuthProvider, reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-    getFirestore, doc, setDoc, deleteDoc,
+    getFirestore, doc, setDoc, deleteDoc, getDocs, runTransaction,
     onSnapshot, collection, updateDoc
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -440,7 +440,7 @@ if (app) {
             historiesRef,
             (snapshot) => {
 
-            state.histories = snapshot.docs.map(doc => ({
+            state.histories = snapshot.docs.filter(doc => doc.id !== '_hcCodeCounter').map(doc => ({
             id: doc.id,
             ...doc.data()
             }));
@@ -529,6 +529,40 @@ id:doc.id,
             const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
             await setDoc(ref, { ...patch, v3UpdatedAt: new Date().toISOString() }, { merge: true });
         };
+function clinicalHistoryCode(patientId, history = {}) {
+    return /^HC-\d{4}$/.test(history.code || '') && Number(history.code.slice(3)) >= 101 ? history.code : '';
+}
+
+async function ensureClinicalHistoryCode(patientId) {
+    if (!state.currentUser) throw new Error('Inicia sesión para asignar el código.');
+    const uid = state.currentUser.uid;
+    const historiesRef = collection(db, 'artifacts', appId, 'users', uid, 'clinicalHistories');
+    const historyRef = doc(historiesRef, String(patientId));
+    const counterRef = doc(historiesRef, '_hcCodeCounter');
+    // Recupera el máximo existente al inicializar o recuperar el contador.
+    const existing = await getDocs(historiesRef);
+    const maxExisting = existing.docs.reduce((max, item) => {
+        const code = item.data().code || '';
+        return /^HC-\d{4}$/.test(code) ? Math.max(max, Number(code.slice(3))) : max;
+    }, 0);
+    const code = await runTransaction(db, async transaction => {
+        const historySnapshot = await transaction.get(historyRef);
+        const counterSnapshot = await transaction.get(counterRef);
+        const history = historySnapshot.exists() ? historySnapshot.data() : {};
+        if (/^HC-\d{4}$/.test(history.code || '') && Number(history.code.slice(3)) >= 101) return history.code;
+        const lastNumber = counterSnapshot.exists() ? Number(counterSnapshot.data().lastNumber) || 0 : 0;
+        const next = Math.max(100, lastNumber, maxExisting) + 1;
+        if (next > 9999) throw new Error('Se alcanzó el límite de 9999 códigos de historia clínica.');
+        const generated = 'HC-' + String(next).padStart(4, '0');
+        transaction.set(counterRef, {lastNumber: next}, {merge:true});
+        transaction.set(historyRef, {code: generated}, {merge:true});
+        return generated;
+    });
+    const local = state.histories.find(item => String(item.id) === String(patientId));
+    if (local) local.code = code;
+    return code;
+}
+
 window.openClinicalHistory = function(patientId){
     try {
         const patients = Array.isArray(state.patients) ? state.patients : [];
@@ -552,6 +586,13 @@ window.openClinicalHistory = function(patientId){
         };
 
         setValue("hc-patient-id", patientId);
+        setValue("hc-code", clinicalHistoryCode(patientId, history) || 'Asignando código…');
+        ensureClinicalHistoryCode(patientId).then(code => {
+            if (document.getElementById('hc-patient-id').value === String(patientId)) setValue('hc-code', code);
+        }).catch(error => {
+            if (document.getElementById('hc-patient-id').value === String(patientId)) setValue('hc-code', 'Pendiente de asignación');
+            alert('No se pudo asignar el código: ' + error.message);
+        });
         setValue("hc-patient-name", patient.name || "");
         setValue("hc-patient-dni", patient.dni || "");
         setValue("hc-patient-phone", patient.phone || "");
@@ -627,6 +668,7 @@ window.saveClinicalHistory = async function(){
         const patientId = document.getElementById("hc-patient-id").value;
         if(!patientId) return;
         const data = {
+            code: await ensureClinicalHistoryCode(patientId),
             firstSession: document.getElementById("hc-first-session").value,
             patientAge: document.getElementById("hc-patient-age").value.trim(),
             civilStatus: document.getElementById("hc-civil-status").value,
@@ -710,11 +752,99 @@ function setPrintText(id, value){
     const el=document.getElementById(id); if(el) el.innerText=value || '—';
 }
 
-window.printClinicalHistory = function() {
+function paginateClinicalDocument(root) {
+    const originals = Array.from(root.querySelectorAll('.hc-print-page'));
+    const template = originals[0];
+    const brand = template.querySelector('.hc-print-brand');
+    const footer = template.querySelector('.hc-print-footer');
+    const wave = template.querySelector('.hc-wave');
+    const groups = originals.map(page => Array.from(page.querySelector('.hc-print-content').children)
+        .filter(node => !node.classList.contains('hc-print-brand')).map(node => node.cloneNode(true)));
+    root.replaceChildren();
+    root.classList.add('hc-paginated');
+    let content;
+    function newPage() {
+        const page = document.createElement('div'); page.className = 'hc-print-page';
+        page.appendChild(wave.cloneNode(true));
+        content = document.createElement('div'); content.className = 'hc-print-content';
+        content.appendChild(brand.cloneNode(true));
+        page.appendChild(content); page.appendChild(footer.cloneNode(true)); root.appendChild(page);
+    }
+    function fits() {
+        const last = content.lastElementChild;
+        const bottom = content.getBoundingClientRect().bottom - parseFloat(content.ownerDocument.defaultView.getComputedStyle(content).paddingBottom);
+        return last.getBoundingClientRect().bottom <= bottom + 0.2;
+    }
+    function add(node) {
+        content.appendChild(node);
+        if (fits()) return;
+        node.remove();
+        const paragraph = node.querySelector('p');
+        const row = node.querySelector('tbody tr');
+        const textElement = paragraph || (row && row.lastElementChild);
+        if (!textElement || !textElement.textContent) {
+            // Mantener juntos los datos generales, el plan y la firma.
+            if (content.children.length > 1) {
+                newPage(); content.appendChild(node);
+                if (fits()) return;
+                node.remove();
+            }
+            throw new Error('Un bloque no cabe en la página. Revisa los datos generales.');
+        }
+        // Las tablas se dividen por filas; las evoluciones extensas también por texto.
+        if (row && node.querySelectorAll('tbody tr').length > 1) {
+            const rows = Array.from(node.querySelectorAll('tbody tr'));
+            for (const item of rows) {
+                const single = node.cloneNode(true); single.querySelector('tbody').replaceChildren(item.cloneNode(true)); add(single);
+            }
+            return;
+        }
+        const text = textElement.textContent;
+        let offset = 0;
+        while (offset < text.length) {
+            const fragment = node.cloneNode(true);
+            fragment.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+            const target = paragraph ? fragment.querySelector('p') : row ? fragment.querySelector('tbody tr').lastElementChild : fragment.querySelector('.hc-plan-grid span');
+            if (offset) { const heading = fragment.querySelector('h2'); if (heading) heading.appendChild(document.createTextNode(' (continuación)')); }
+            content.appendChild(fragment);
+            let low = 0, high = text.length - offset;
+            while (low < high) {
+                const mid = Math.ceil((low + high) / 2); target.textContent = text.slice(offset, offset + mid);
+                if (fits()) low = mid; else high = mid - 1;
+            }
+            if (!low) {
+                fragment.remove();
+                if (content.children.length > 1) { newPage(); continue; }
+                throw new Error('No se pudo distribuir el contenido de la historia.');
+            }
+            target.textContent = text.slice(offset, offset + low);
+            const lineHeight = parseFloat(target.ownerDocument.defaultView.getComputedStyle(target).lineHeight) || 16;
+            if (offset + low < text.length && target.getBoundingClientRect().height < lineHeight * 2 && content.children.length > 2) {
+                // Evitar que el título quede al final con una sola línea de texto.
+                fragment.remove(); newPage(); continue;
+            }
+            // Preferir cortes entre palabras sin eliminar espacios ni saltos.
+            let count = low;
+            if (offset + count < text.length) {
+                const boundary = text.slice(offset, offset + count).search(/\s+\S*$/);
+                if (boundary > count / 2) count = boundary + 1;
+            }
+            target.textContent = text.slice(offset, offset + count); offset += count;
+            if (offset < text.length) newPage();
+        }
+    }
+    newPage();
+    groups.flat().forEach(add);
+}
+
+window.printClinicalHistory = async function() {
     const patientId = document.getElementById("hc-patient-id").value;
     const patient = state.patients.find(p => p.id === patientId);
     if (!patient) { alert("No se encontró el paciente."); return; }
 
+    let code;
+    try { code = await ensureClinicalHistoryCode(patientId); }
+    catch (error) { alert('No se pudo asignar el código: ' + error.message); return; }
     const history = state.histories.find(h=>h.id===patientId) || {};
     const user = window._profileState && window._profileState.currentUser;
     let specialistName='Especialista';
@@ -722,6 +852,7 @@ window.printClinicalHistory = function() {
 
     setPrintText('pch-specialist-foot', specialistName);
     setPrintText('pch-specialist-foot-2', specialistName);
+    setPrintText('pch-code', code);
     setPrintText('pch-name', patient.name);
     setPrintText('pch-dni', patient.dni);
     setPrintText('pch-phone', patient.phone);
@@ -750,15 +881,58 @@ window.printClinicalHistory = function() {
     if(notesData.length){ notesData.forEach(n=>{ const tr=document.createElement('tr'); [n.fecha,n.sesion,n.evolucion||'—'].forEach((v,i)=>{const td=document.createElement('td'); td.innerText=v; tr.appendChild(td);}); tbody.appendChild(tr); }); }
     else tbody.innerHTML='<tr><td colspan="3">Sin evolución clínica registrada.</td></tr>';
 
-    hideAllPrintSections();
-    const clinicalModal=document.getElementById('clinical-history-modal');
-    clinicalModal.classList.add('hidden'); clinicalModal.classList.remove('flex');
-    document.getElementById('print-clinical-history').classList.remove('hidden');
-    setTimeout(()=>{
+    const dateParts = new Intl.DateTimeFormat('en-CA', {
+        timeZone:'America/Lima', year:'numeric', month:'2-digit', day:'2-digit'
+    }).formatToParts(new Date());
+    const part = type => dateParts.find(p => p.type === type).value;
+    const date = `${part('year')}-${part('month')}-${part('day')}`;
+    const name = (patient.name || 'Paciente').replace(/[<>:"/\\|?*\x00-\x1f]/g, '').trim();
+    const filename = `${name}_${date}`;
+    if (window._clinicalPrintBusy) return;
+    window._clinicalPrintBusy = true;
+    const original = document.getElementById('print-clinical-history');
+    const staging = original.cloneNode(true);
+    staging.removeAttribute('id');
+    staging.classList.remove('hidden');
+    staging.classList.add('hc-paginated', 'no-print');
+    staging.style.cssText = 'position:absolute;left:-10000px;top:0;width:210mm;display:block!important';
+    document.body.appendChild(staging);
+    const previousTitle = document.title;
+    let savedChildren = null;
+    let cleaned = false;
+    const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        staging.remove();
+        document.body.classList.remove('printing-clinical-history');
+        document.title = previousTitle;
+        if (savedChildren) original.replaceChildren(...savedChildren);
+        original.classList.remove('hc-paginated');
+        original.classList.add('hidden');
+        window._clinicalPrintBusy = false;
+        window.removeEventListener('afterprint', cleanup);
+    };
+    (async () => {
+        if (document.fonts) await document.fonts.ready;
+        await Promise.all(Array.from(staging.querySelectorAll('img')).map(img =>
+            typeof img.decode === 'function' ? img.decode().catch(() => {}) : Promise.resolve()));
+        paginateClinicalDocument(staging);
+        savedChildren = Array.from(original.childNodes);
+        original.replaceChildren(...Array.from(staging.childNodes));
+        staging.remove();
+        hideAllPrintSections();
+        original.classList.add('hc-paginated');
+        original.classList.remove('hidden');
+        document.body.classList.add('printing-clinical-history');
+        document.title = filename;
+        window.addEventListener('afterprint', cleanup, {once:true});
+        await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
         window.print();
-        document.getElementById('print-clinical-history').classList.add('hidden');
-        clinicalModal.classList.remove('hidden'); clinicalModal.classList.add('flex');
-    },300);
+    })().catch(error => {
+        cleanup();
+        console.error('[Preparación de historia clínica]', error);
+        alert('No se pudo preparar la impresión: ' + (error?.message || 'error desconocido'));
+    });
 };
 
         window.editPatient = function(pid) {

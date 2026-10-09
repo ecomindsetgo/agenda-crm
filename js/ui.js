@@ -2348,6 +2348,7 @@ function installMoreSheet(){
     <button class="v36-more-item" onclick="v36Go('documentos')"><span class="v36-more-icon">${svg('file')}</span><div><strong>Documentos</strong><span>Archivos por paciente</span></div></button>
     <button class="v36-more-item" onclick="v36Go('caja')"><span class="v36-more-icon">${svg('money')}</span><div><strong>Caja diaria</strong><span>Ingresos y pendientes</span></div></button>
     <button class="v36-more-item" onclick="v36Go('alertas')"><span class="v36-more-icon">${svg('bell')}</span><div><strong>Alertas</strong><span>Seguimiento y pendientes</span></div></button>
+    <button class="v36-more-item" onclick="closeV36More(); openConsultorioTasks()"><span class="v36-more-icon">${svg('check')}</span><div><strong>Tareas</strong><span>Pendientes administrativos</span></div></button>
     <button class="v36-more-item" onclick="closeV36More(); openPrintModal('dia','citas')"><span class="v36-more-icon">${svg('report')}</span><div><strong>Reportes</strong><span>Agenda, finanzas y recepción</span></div></button>
     <button class="v36-more-item" onclick="closeV36More(); openAssistantModal()"><span class="v36-more-icon">${svg('spark')}</span><div><strong>Asistente</strong><span>Consultas administrativas</span></div></button>
    </div>
