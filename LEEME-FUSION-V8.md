@@ -8,3 +8,9 @@ Se conservan los verdes y la navegación sencilla, agenda día/semana/mes, detal
 - No se incluyen funciones de envío automático ni instrucciones para activarlas en esta entrega.
 
 Las verificaciones usan datos simulados. No se envían mensajes reales ni se cambian datos de producción.
+
+## V8.1 — Pagos anteriores
+Finanzas abre todo el historial de citas de la misma cuenta Firebase y muestra los cobros antiguos y actuales. No migra ni sobrescribe registros. Usa pago completo por estado pagado y abonos por paidAmount. No puede recuperar datos borrados ni datos de otra cuenta/proyecto. Las fechas mostradas son de cita cuando no existe una fecha de pago.
+
+## V8.2 — Solo reportes originales
+Eliminado el centro nuevo de reportes. Más opciones → Reportes abre directamente el selector original, conservando sus categorías, periodos y formato de impresión. Finanzas → Ver reportes abre el mismo selector en categoría finanzas.
