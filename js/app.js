@@ -766,6 +766,43 @@ window.registerAppointmentPayment = async function(aid,data){
     });
 };
 
+// Reversión de cobro auditada; conserva el movimiento original y registra un contramovimiento.
+window.reverseAppointmentPayment = async function(aid){
+    if(!state.currentUser) { alert('Inicia sesión.'); return; }
+    const a=state.appointments.find(x=>x.id===aid);
+    if(!a) { alert('Cita no encontrada.'); return; }
+    const current=window.CRMCore.paid(a);
+    if(current<=0) { alert('Esta cita no registra cobros por revertir.'); return; }
+    const value=prompt(`Cobrado: ${current.toFixed(2)}. ¿Cuánto se debe revertir?`,current.toFixed(2));
+    if(value===null)return;
+    const amount=Math.round(Number(String(value).replace(',','.'))*100);
+    if(!Number.isFinite(amount)||amount<=0||amount>Math.round(current*100)){alert('Importe de reversión inválido.');return;}
+    const reason=prompt('Motivo obligatorio de la reversión (por ejemplo: cobro registrado por error):','');
+    if(reason===null)return;
+    if(reason.trim().length<8){alert('Especifica un motivo de al menos 8 caracteres.');return;}
+    if(!confirm(`Se registrará una reversión por ${window.CRMCore.currency(a)==='USD'?'US$':'S/'} ${(amount/100).toFixed(2)}. El historial no se eliminará. ¿Confirmas?`))return;
+    const ref=doc(db,'artifacts',appId,'users',state.currentUser.uid,'appointments',aid);
+    const opId='rev_'+crypto.randomUUID();
+    try{
+        await runTransaction(db,async tx=>{
+            const snap=await tx.get(ref);
+            if(!snap.exists())throw new Error('La cita ya no existe.');
+            const fresh=snap.data();
+            const before=Math.round(window.CRMCore.paid(fresh)*100);
+            if(amount>before)throw new Error('El cobro cambió en otro dispositivo; vuelve a intentar.');
+            const now=new Date().toISOString();
+            const history=Array.isArray(fresh.paymentHistory)?fresh.paymentHistory.slice():[];
+            // Si el pago venía de una versión anterior, dejamos explícito que el origen carece de desglose.
+            if(!history.length&&before>0)history.push({id:'legacy_'+aid,type:'legacy_balance',amount:before/100,date:fresh.paymentDate||fresh.date||'',method:fresh.paymentMethod||'No documentado',createdAt:now,createdBy:'sistema',note:'Saldo previo importado; comprobante original no disponible'});
+            history.push({id:opId,type:'reversal',amount:-(amount/100),date:window.CRMCore.dateKey(),method:'Reversión',reason:reason.trim().slice(0,400),createdAt:now,createdBy:state.currentUser.uid});
+            const next=(before-amount)/100;
+            const price=Math.round(window.CRMCore.cost(fresh)*100);
+            tx.update(ref,{paidAmount:next,paymentStatus:next<=0?'pendiente':Math.round(next*100)>=price?'pagado':'parcial',paymentHistory:history,paymentUpdatedAt:now,updatedAt:now,updatedBy:state.currentUser.uid,lastPaymentCorrectionId:opId});
+        });
+        alert('Reversión registrada. Finanzas y la ficha se actualizarán con el nuevo saldo.');
+    }catch(err){console.error('Error revirtiendo pago:',err);alert('No se pudo revertir: '+err.message);}
+};
+
 window.saveQuickClinicalNote = async function(data){
     if(!state.currentUser)throw new Error('Inicia sesión para guardar.');
     if(!state.patients.some(p=>p.id===data.patientId))throw new Error('Selecciona un paciente registrado.');

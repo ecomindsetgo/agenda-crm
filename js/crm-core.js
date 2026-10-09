@@ -4,7 +4,7 @@
  const validAppointment=a=>a&&!a.isManualBlock&&a.recordType!=='manual_block';
  const currency=a=>a.currency==='USD'?'USD':'PEN';
  const cost=a=>numeric(a.cost);
- const paid=a=>Math.min(cost(a),a.paymentStatus==='pagado'?cost(a):numeric(a.paidAmount));
+ const paid=a=>{const hasAmount=a.paidAmount!==undefined&&a.paidAmount!==null&&a.paidAmount!=='';return Math.min(cost(a),hasAmount?numeric(a.paidAmount):(a.paymentStatus==='pagado'?cost(a):0));};
  const cancelled=a=>['cancelada','no_asistio'].includes(a.status);
  const remaining=a=>cancelled(a)?0:Math.max(0,cost(a)-paid(a));
  function metrics(input){
