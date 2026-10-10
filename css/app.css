@@ -940,3 +940,34 @@ body:has(#app-container.hidden) .v2-mobile-nav {display:none!important;visibilit
   .v3-drawer-head{padding:14px 14px 12px!important}
   .v3-drawer-body{padding:12px 12px calc(56px + env(safe-area-inset-bottom,0px))!important}
 }
+
+
+/* V8.15: Vista 360 con scroll hasta el final y espacio inferior seguro en móvil. */
+#v3-patient-content{
+  min-height:100%;
+  display:flex;
+  flex-direction:column;
+}
+.v3-patient-drawer{
+  overflow-y:scroll!important;
+  overflow-x:hidden!important;
+  scrollbar-width:thin;
+  -webkit-overflow-scrolling:touch;
+}
+.v3-drawer-body{
+  padding-bottom:calc(110px + env(safe-area-inset-bottom, 0px))!important;
+}
+.v3-drawer-body::after{
+  content:"";
+  display:block;
+  height:96px;
+  width:100%;
+}
+@media (max-width:760px){
+  .v3-drawer-body{
+    padding-bottom:calc(140px + env(safe-area-inset-bottom, 0px))!important;
+  }
+  .v3-drawer-body::after{
+    height:120px;
+  }
+}
