@@ -90,3 +90,5 @@
 .elo-destructive-actions .elo-delete-button:hover{background:#fbe2e7}
 @media(max-width:760px){.elo-destructive-actions{display:grid;grid-template-columns:1fr 1fr}.elo-destructive-actions button{min-width:0;padding:11px 8px}}
 }
+
+.elo-payment-warning{margin:10px 0;padding:10px 12px;border:1px solid #e2c58f;border-radius:10px;background:#fff8e8;color:#704c14;font-size:.88rem}

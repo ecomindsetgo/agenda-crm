@@ -5,6 +5,8 @@
  const currency=a=>a.currency==='USD'?'USD':'PEN';
  const cost=a=>numeric(a.cost);
  const paid=a=>{const hasAmount=a.paidAmount!==undefined&&a.paidAmount!==null&&a.paidAmount!=='';return Math.min(cost(a),hasAmount?numeric(a.paidAmount):(a.paymentStatus==='pagado'?cost(a):0));};
+ const paymentState=a=>{const amount=paid(a),price=cost(a);return amount<=0?'pendiente':price>0&&amount>=price?'pagado':'parcial';};
+ const paymentMismatch=a=>String(a.paymentStatus||'pendiente').toLowerCase()!==paymentState(a);
  const cancelled=a=>['cancelada','no_asistio'].includes(a.status);
  const remaining=a=>cancelled(a)?0:Math.max(0,cost(a)-paid(a));
  function metrics(input){
@@ -25,5 +27,5 @@
  function inRange(a,start,end){return validAppointment(a)&&(!start||a.date>=start)&&(!end||a.date<=end);}
  function safeURL(value){try{const u=new URL(String(value));return ['http:','https:'].includes(u.protocol)?u.href:'';}catch(_){return '';}}
  function csvCell(value){let s=String(value??'');if(/^[\s]*[=+@\-]/.test(s)||/^[\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';}
- global.CRMCore={numeric,validAppointment,currency,cost,paid,remaining,cancelled,metrics,money,dateKey,inRange,safeURL,csvCell};
+ global.CRMCore={numeric,validAppointment,currency,cost,paid,paymentState,paymentMismatch,remaining,cancelled,metrics,money,dateKey,inRange,safeURL,csvCell};
 })(typeof window==='undefined'?globalThis:window);

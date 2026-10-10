@@ -2037,10 +2037,10 @@ window.printClinicalHistory = async function() {
                 };
                 const badge = statusClassMap[a.status] || statusClassMap.pendiente;
                 const statusTextMap = { pendiente:'AGENDADA', confirmada:'CONFIRMADA', arrived:'LLEGÓ', in_session:'EN SESIÓN', completada:'COMPLETADA', no_asistio:'NO ASISTIÓ', cancelada:'CANCELADA' };
-                const payBadgeCls = a.paymentStatus === 'pagado'
+                const payBadgeCls = window.CRMCore.paymentState(a) === 'pagado'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : 'bg-amber-50 text-amber-700 border-amber-200';
-                const payBadgeLbl = a.paymentStatus === 'pagado' ? '💳 Pagado' : '⏳ Pendiente';
+                const payBadgeLbl = window.CRMCore.paymentState(a) === 'pagado' ? '💳 Pagado' : '⏳ Pendiente';
                 // Mismo patrón de color que el botón de estado de pago:
                 // completada = verde, pendiente = ámbar, cancelada = rojo.
                 const statusSelectCls = {
@@ -2068,7 +2068,7 @@ window.printClinicalHistory = async function() {
                                 <div class="v31-badge-row">
                                     <span class="v31-status-badge ${badge}">${statusTextMap[a.status] || String(a.status || 'AGENDADA').toUpperCase()}</span>
                                     ${modalityBadge.replace('text-xs font-semibold px-2 py-0.5 rounded-xl border','v31-status-badge')}
-                                    <span class="v31-status-badge ${payBadgeCls}">${a.paymentStatus === 'pagado' ? 'Pagado' : 'Pago pendiente'}</span>
+                                    <span class="v31-status-badge ${payBadgeCls}">${window.CRMCore.paymentState(a) === 'pagado' ? 'Pagado' : window.CRMCore.paymentState(a)==='parcial'?'Abono registrado':'Pago pendiente'}</span>
                                 </div>
                             </div>
                             <div class="v31-appointment-actions-primary">
@@ -2088,7 +2088,7 @@ window.printClinicalHistory = async function() {
                                     <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
                                 </select>
                             </label>
-                            <button onclick="quickTogglePayment('${a.id}')" class="v31-payment-btn ${payBadgeCls}"><svg class="v2-icon"><use href="#i-money"></use></svg><span>${a.paymentStatus === 'pagado' ? 'Pagado' : 'Registrar pago'}</span></button>
+                            <button onclick="quickTogglePayment('${a.id}')" class="v31-payment-btn ${payBadgeCls}"><svg class="v2-icon"><use href="#i-money"></use></svg><span>${window.CRMCore.paymentState(a) === 'pagado' ? 'Pagado' : window.CRMCore.paymentState(a)==='parcial'?'Abono registrado':'Registrar pago'}</span></button>
                         </div>
                     </div>
                 </article>`;
