@@ -29,7 +29,24 @@ function buildAgendaControls(){
  const head=document.querySelector('.v34-board-head');if(head&&!q('elo-agenda-filter'))head.insertAdjacentHTML('beforeend','<label class="elo-filter">Mostrar<select id="elo-agenda-filter"><option value="todas">Todas</option><option value="pendiente">Pendientes</option><option value="completada">Completadas</option><option value="cancelada">Canceladas</option><option value="no_asistio">No asistió</option></select></label>');q('elo-agenda-filter')?.addEventListener('change',e=>{s().filterStatus=e.target.value;renderAgenda();});
  const old=window.setCitasView;window.setCitasView=function(view){if(!['dia','mes','semana'].includes(view))return;s().citasView=view;if(view==='semana'){q('citas-day-view')?.classList.remove('hidden');q('citas-month-view')?.classList.add('hidden');renderAgenda();}else{old(view);if(view==='dia')renderAgenda();}['dia','mes','semana'].forEach(v=>{const b=q('btn-view-'+v);if(b){b.classList.toggle('active',v===view);b.classList.toggle('v31-view-active',v===view);b.setAttribute('aria-pressed',String(v===view));}});};
 }
-function goNotes(patientId){window.switchTab('sesiones');const select=q('crm-notes-patient');if(select){select.value=patientId;select.dispatchEvent(new Event('change'));q('crm-new-note').open=true;q('crm-note-text').focus();}}
+function goNotes(patientId){
+ window.__eloNotesReturn={appointmentId:selected,date:q('date-filter')?.value||'',patientId};
+ window.switchTab('sesiones');
+ const select=q('crm-notes-patient');
+ if(select){select.value=patientId;select.dispatchEvent(new Event('change'));const form=q('crm-new-note');if(form){form.open=true;form.scrollIntoView({block:'start',behavior:'smooth'});}q('crm-note-text')?.focus({preventScroll:true});}
+}
+window.returnFromAppointmentNote=function(){
+ const back=window.__eloNotesReturn;
+ const textarea=q('crm-note-text');
+ if(textarea?.value.trim()&&!confirm('La nota no se ha guardado. ¿Regresar sin guardar?'))return;
+ q('crm-new-note')?.removeAttribute('open');
+ if(back?.date&&q('date-filter'))q('date-filter').value=back.date;
+ if(back?.appointmentId)selected=back.appointmentId;
+ window.switchTab('citas');renderAgenda();
+ if(back?.appointmentId){const btn=[...document.querySelectorAll('[data-exp-action="select"]')].find(el=>el.dataset.id===back.appointmentId);btn?.scrollIntoView({block:'nearest',behavior:'smooth'});}
+ window.__eloNotesReturn=null;
+};
+
 document.addEventListener('click',async e=>{const b=e.target.closest('[data-exp-action]');if(!b)return;switch(b.dataset.expAction){case 'whatsapp':window.enviarRecordatorioWhatsapp(b.dataset.id);break;case 'select':selected=selected===b.dataset.id?'':b.dataset.id;renderAgenda();break;case 'pay':openPayment(b.dataset.id);break;case 'edit':window.editAppointment(b.dataset.id);break;case 'history':window.openClinicalHistory(b.dataset.patient);break;case 'note':goNotes(b.dataset.patient);break;case 'cancel':if(typeof window.deleteAppointment==='function')await window.deleteAppointment(b.dataset.id);break;case 'reverse-payment':if(typeof window.reverseAppointmentPayment==='function')await window.reverseAppointmentPayment(b.dataset.id);break;case 'delete':if(typeof window.removeAppointmentPermanently==='function')await window.removeAppointmentPermanently(b.dataset.id);else alert('La acción de eliminación todavía no está disponible. Recarga la aplicación.');break;}});
 function boot(){if(!q('sec-asistente')||!window.renderAppointments)return false;window.renderAppointments=renderAgenda;buildAgendaControls();q('sec-asistente').innerHTML=`<div class="crm-page-title"><h2>Asistente IA</h2><p>Tu asistente original para consultar y organizar el consultorio.</p></div><article class="crm-panel"><h3>¿En qué necesitas ayuda?</h3><p>Utiliza el chat y la configuración de IA que ya tenía Agenda Pro.</p><button class="crm-primary" data-crm-action="assistant">Abrir mi asistente IA</button></article>`;return true;}
 
