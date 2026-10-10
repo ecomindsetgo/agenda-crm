@@ -971,3 +971,16 @@ body:has(#app-container.hidden) .v2-mobile-nav {display:none!important;visibilit
     height:120px;
   }
 }
+
+/* V8.16: disponibilidad binaria: verde libre, rojo cita o bloqueo. */
+#schedule-occupancy-grid .v23-free-slot{background:#e5f6e9!important;border:1px solid #82ca99!important;color:#176838!important}
+#schedule-occupancy-grid .v23-free-slot span{color:#176838!important}
+#schedule-occupancy-grid .v23-appt-slot,
+#schedule-occupancy-grid .v23-manual-slot,
+#schedule-occupancy-grid .v23-unavailable-slot{background:#fbe6e7!important;border:1px solid #e5a3a8!important;color:#942b36!important;background-image:none!important;box-shadow:none!important}
+#schedule-occupancy-grid .v23-appt-slot span,
+#schedule-occupancy-grid .v23-manual-slot span,
+#schedule-occupancy-grid .v23-unavailable-slot span{color:#942b36!important}
+#schedule-occupancy-grid .horario-export-label{display:none!important}
+#horario-capture-area.v31-privacy-capture .horario-screen-label{display:none!important}
+#horario-capture-area.v31-privacy-capture .horario-export-label{display:block!important}

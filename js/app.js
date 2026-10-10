@@ -3586,11 +3586,13 @@ window.printClinicalHistory = async function() {
 
                     if (manualBlock) {
                         const safeReason=String(manualBlock.reason||'Bloqueo manual').replace(/["<>]/g,'');
-                        html += `<div title="${safeReason}" class="v23-manual-slot"><span>Ocupado</span><small>${manualBlock.blockStart}–${manualBlock.blockEnd}</small></div>`;
+                        html += `<div title="${safeReason}" class="v23-manual-slot"><span class="horario-screen-label">Ocupado por bloqueo</span><span class="horario-export-label">Ocupado</span></div>`;
                     } else if (citaSlot) {
                         html += `<div title="${String(citaSlot.patientName||'Cita').replace(/["<>]/g,'')}" class="v23-appt-slot"><span>Ocupado</span><small>${String(citaSlot.patientName||'Cita').replace(/[<>]/g,'')}</small></div>`;
                     } else if (bloqueadoPorDefecto || yaPaso) {
-                        html += `<div class="v23-unavailable-slot"><span>${bloqueadoPorDefecto?'No disponible':'Ocupado'}</span></div>`;
+                        html += bloqueadoPorDefecto
+                            ? `<div class="v23-unavailable-slot"><span class="horario-screen-label">Ocupado por bloqueo</span><span class="horario-export-label">Ocupado</span></div>`
+                            : `<div class="v23-unavailable-slot"><span>Ocupado</span></div>`;
                     } else {
                         html += `<div class="v23-free-slot"><span>Libre</span></div>`;
                     }
