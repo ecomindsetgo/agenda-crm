@@ -8,11 +8,26 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
     match /artifacts/psicologia-agenda-default-v2/users/{userId}/appointments/{id} {
-      allow read, write: if owner(userId);
+      allow read, create, update: if owner(userId);
+      // Borrado excepcional: debe carecer de pagos, historia financiera y actividad clínica.
+      allow delete: if owner(userId)
+        && (!('paidAmount' in resource.data) || resource.data.paidAmount == 0)
+        && (!('paymentHistory' in resource.data) || resource.data.paymentHistory.size() == 0)
+        && (!('paymentStatus' in resource.data) || !(resource.data.paymentStatus in ['pagado', 'parcial']))
+        && (!('packageId' in resource.data) || resource.data.packageId == null || resource.data.packageId == '')
+        && (!('packageConsumed' in resource.data) || resource.data.packageConsumed == false)
+        && (!('status' in resource.data) || !(resource.data.status in ['completada', 'in_session', 'arrived']))
+        && (!('notes' in resource.data) || resource.data.notes == '');
     }
     match /artifacts/psicologia-agenda-default-v2/users/{userId}/appointmentDeletionAudit/{id} {
       allow read: if owner(userId);
-      allow create: if owner(userId) && request.resource.data.deletedBy == request.auth.uid;
+      allow create: if owner(userId)
+        && request.resource.data.deletedBy == request.auth.uid
+        && request.resource.data.appointmentId is string
+        && request.resource.data.appointmentId.size() > 0
+        && request.resource.data.deletedAt is string
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() >= 8;
       allow update, delete: if false;
     }
     match /artifacts/psicologia-agenda-default-v2/users/{userId}/patients/{id} {

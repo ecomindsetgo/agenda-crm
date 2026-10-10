@@ -1853,9 +1853,9 @@ window.printClinicalHistory = async function() {
                     const snapshot = await tx.get(ref);
                     if (!snapshot.exists()) throw new Error('Esta cita ya fue eliminada.');
                     const original = snapshot.data();
-                    const paid = Number(original.paidAmount || 0);
+                    const paid = window.CRMCore.paid(original);
                     const financialHistory = Array.isArray(original.paymentHistory) ? original.paymentHistory : [];
-                    if (paid > 0 || financialHistory.length > 0 || original.paymentStatus === 'pagado' || original.paymentStatus === 'parcial') throw new Error('Tiene movimientos financieros. Cancela la cita; no la elimines.');
+                    if (paid > 0 || financialHistory.length > 0 || ['pagado','parcial'].includes(original.paymentStatus)) throw new Error('Tiene movimientos financieros. Cancela la cita; no la elimines.');
                     if (original.packageId || original.packageConsumed) throw new Error('La cita está vinculada a un paquete. Debes cancelarla para preservar la trazabilidad.');
                     if (['completada','in_session','arrived'].includes(original.status)) throw new Error('La cita tiene actividad asistencial. Debes conservarla y cambiar su estado.');
                     if (String(original.notes || '').trim()) throw new Error('La cita tiene notas registradas. Cancélala para conservar la información clínica.');
@@ -3397,7 +3397,7 @@ window.printClinicalHistory = async function() {
                         : a.status === 'cancelada'
                         ? 'bg-red-50 text-red-600 border-red-200'
                         : 'bg-amber-50 text-amber-700 border-amber-200';
-                    const payBadge = a.paymentStatus === 'pagado'
+                    const payBadge = window.CRMCore.paymentState(a) === 'pagado'
                         ? 'text-emerald-600 bg-emerald-50 border-emerald-200'
                         : 'text-amber-600 bg-amber-50 border-amber-200';
                     const modalityBadge = a.modality === 'virtual'
@@ -3409,7 +3409,7 @@ window.printClinicalHistory = async function() {
                             <span class="text-xs font-semibold text-graphite-600 bg-graphite-200 px-2 py-0.5 rounded-lg">${a.time}</span>
                             <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${a.status.toUpperCase()}</span>
                             ${modalityBadge}
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${payBadge}">${a.paymentStatus === 'pagado' ? 'Pagado' : 'Pendiente'} — ${formatApptCostLabel(a)}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${payBadge}">${window.CRMCore.paymentState(a) === 'pagado' ? 'Pagado' : window.CRMCore.paymentState(a) === 'parcial' ? 'Abono parcial' : 'Pendiente'} — ${formatApptCostLabel(a)}</span>
                         </div>
                         ${a.notes ? `<p class="text-xs text-graphite-500 italic">"${a.notes}"</p>` : ''}
                     </div>`;
@@ -3656,12 +3656,12 @@ window.printClinicalHistory = async function() {
 
             weeklyAppointments.forEach((a, index) => {
                 const cost = Number(a.cost || 0);
-                const paid = a.paymentStatus === 'pagado';
+                const paidAmount = window.CRMCore.paid(a);
                 const currency = a.currency === 'USD' ? 'USD' : 'PEN';
                 const symbol = currency === 'USD' ? '$' : 'S/';
 
                 totalPrecio += cost;
-                if (paid) totalCobrado += cost;
+                totalCobrado += paidAmount;
 
                 const statusLabel = {
                     completada: 'REALIZADO',
