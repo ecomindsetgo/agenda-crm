@@ -972,15 +972,18 @@ body:has(#app-container.hidden) .v2-mobile-nav {display:none!important;visibilit
   }
 }
 
-/* V8.16: disponibilidad binaria: verde libre, rojo cita o bloqueo. */
-#schedule-occupancy-grid .v23-free-slot{background:#e5f6e9!important;border:1px solid #82ca99!important;color:#176838!important}
-#schedule-occupancy-grid .v23-free-slot span{color:#176838!important}
+/* V8.18: colores del horario como el diseño anterior adjunto. */
+#schedule-occupancy-grid .v23-free-slot{background:#bbe8d5!important;border:1px solid #9fd8c0!important;color:#2d8b71!important;box-shadow:none!important}
+#schedule-occupancy-grid .v23-free-slot span{color:#2d8b71!important}
 #schedule-occupancy-grid .v23-appt-slot,
 #schedule-occupancy-grid .v23-manual-slot,
-#schedule-occupancy-grid .v23-unavailable-slot{background:#fbe6e7!important;border:1px solid #e5a3a8!important;color:#942b36!important;background-image:none!important;box-shadow:none!important}
+#schedule-occupancy-grid .v23-unavailable-slot{background:#ef9faa!important;border:1px solid #e88d9a!important;color:#a32642!important;background-image:none!important;box-shadow:none!important}
 #schedule-occupancy-grid .v23-appt-slot span,
 #schedule-occupancy-grid .v23-manual-slot span,
-#schedule-occupancy-grid .v23-unavailable-slot span{color:#942b36!important}
+#schedule-occupancy-grid .v23-unavailable-slot span{color:#a32642!important}
+#schedule-occupancy-grid .v23-appt-slot small,
+#schedule-occupancy-grid .v23-manual-slot small,
+#schedule-occupancy-grid .v23-unavailable-slot small{color:#a32642!important;opacity:.95}
 #schedule-occupancy-grid .horario-export-label{display:none!important}
 #horario-capture-area.v31-privacy-capture .horario-screen-label{display:none!important}
 #horario-capture-area.v31-privacy-capture .horario-export-label{display:block!important}
