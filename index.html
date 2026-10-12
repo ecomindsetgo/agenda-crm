@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css?v=crm-v8-16">
+    <link rel="stylesheet" href="css/app.css?v=crm-v8-19">
 <link rel="stylesheet" href="css/crm.css?v=crm-v8-16">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#356b69">
@@ -453,6 +453,7 @@
                         <div class="flex flex-wrap gap-2">
                             <select id="v2-crm-filter" onchange="renderV2CRM()" class="v2-field"><option value="todos">Todos los estados</option><option value="nuevo">Nuevos</option><option value="tratamiento">En tratamiento</option><option value="seguimiento">Seguimiento</option><option value="pausado">Pausados</option><option value="alta">Alta</option><option value="inactivo">Inactivos</option></select>
                             <input id="v2-crm-search" oninput="renderV2CRM()" class="v2-field" placeholder="Buscar en CRM...">
+                            <button type="button" onclick="openPatientModal()" class="v2-primary-btn" id="v819-new-patient" aria-label="Crear paciente nuevo"><svg class="v2-icon"><use href="#i-plus"></use></svg> Nuevo paciente</button>
                         </div>
                     </div>
                     <div id="v2-crm-summary" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4"></div>
@@ -492,12 +493,12 @@
                             <button onclick="openPrintModal(window._profileState && window._profileState.financePeriod === 'mes' ? 'mes' : (window._profileState && window._profileState.financePeriod === 'semana' ? 'semana' : (window._profileState && window._profileState.financePeriod === 'personalizado' ? 'personalizado' : 'dia')), 'finanzas')" class="v2-primary-btn"><svg class="v2-icon"><use href="#i-report"></use></svg>Reporte</button>
                         </div>
                     </div>
-                    <div class="v23-period-tabs" role="group" aria-label="Filtro de periodo financiero">
-                        <button onclick="setFinancePeriod('dia')" id="btn-fp-dia"><span>Día</span><small>Fecha seleccionada</small></button>
-                        <button onclick="setFinancePeriod('semana')" id="btn-fp-semana"><span>Semana</span><small>Lunes a domingo</small></button>
-                        <button onclick="setFinancePeriod('mes')" id="btn-fp-mes"><span>Mes</span><small>Mes seleccionado</small></button>
-                        <button onclick="setFinancePeriod('todo')" id="btn-fp-todo" class="v23-period-active"><span>Todo</span><small>Historial completo</small></button>
-                        <button onclick="setFinancePeriod('personalizado')" id="btn-fp-personalizado"><span>Rango</span><small>Fechas personalizadas</small></button>
+                    <div class="v23-period-tabs" role="group" aria-label="Periodo del resumen financiero">
+                        <button type="button" onclick="setFinancePeriod('todo')" id="btn-fp-todo" class="v23-period-active"><span>Todo el tiempo</span><small>Historial completo</small></button>
+                        <button type="button" onclick="setFinancePeriod('mes')" id="btn-fp-mes"><span>Este mes</span><small>Mes seleccionado</small></button>
+                        <button type="button" onclick="setFinancePeriod('semana')" id="btn-fp-semana"><span>Esta semana</span><small>Lunes a domingo</small></button>
+                        <button type="button" onclick="setFinancePeriod('dia')" id="btn-fp-dia"><span>Hoy</span><small>Fecha seleccionada</small></button>
+                        <button type="button" onclick="setFinancePeriod('personalizado')" id="btn-fp-personalizado"><span>Rango</span><small>Fechas personalizadas</small></button>
                     </div>
                     <div class="v23-finance-datebar">
                         <div class="v23-date-nav">
@@ -1733,8 +1734,8 @@
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
     <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <script src="js/crm-core.js?v=crm-v8-16"></script>
-    <script type="module" src="js/app.js?v=crm-v8-16"></script>
-    <script src="js/ui.js?v=crm-v8-16"></script>
+    <script type="module" src="js/app.js?v=crm-v8-19"></script>
+    <script src="js/ui.js?v=crm-v8-19"></script>
     <script src="js/tasks.js?v=crm-v8-16" defer></script>
     <script src="js/crm-platform.js?v=crm-v8-16" defer></script>
     <script src="js/experience.js?v=crm-v8-16" defer></script>
