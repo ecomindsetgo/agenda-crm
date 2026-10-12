@@ -17,14 +17,41 @@
  }
  window.renderV3Dashboard=renderDashboard;
  window.renderV2Dashboard=renderDashboard;
+ let financePaidPage=1,financePendingPage=1;
+ const PAGE_SIZE=10;
+ const localISO=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+ function selectedFinanceRange(){
+  const st=state(),period=st.financePeriod||'todo',ref=st.financeReferenceDate||C.dateKey();
+  if(period==='todo')return ['',''];
+  if(period==='personalizado')return [st.financeCustomStart||'',st.financeCustomEnd||''];
+  if(period==='dia')return [ref,ref];
+  const d=new Date(ref+'T12:00:00');if(!Number.isFinite(d.getTime()))return ['',''];
+  if(period==='semana'){d.setDate(d.getDate()-(d.getDay()+6)%7);const start=localISO(d);d.setDate(d.getDate()+6);return [start,localISO(d)];}
+  if(period==='mes')return [localISO(new Date(d.getFullYear(),d.getMonth(),1)),localISO(new Date(d.getFullYear(),d.getMonth()+1,0))];
+  return ['',''];
+ }
+ function financePager(type,total,page){
+  if(total<=PAGE_SIZE)return total?`<p class="crm-page-caption">${total} registro(s)</p>`:'';
+  const pages=Math.ceil(total/PAGE_SIZE),start=(page-1)*PAGE_SIZE+1,end=Math.min(page*PAGE_SIZE,total);
+  return `<nav class="crm-finance-pager" aria-label="Páginas de ${type==='paid'?'pagos registrados':'pagos pendientes'}"><span>${start}–${end} de ${total}</span><button type="button" data-finance-page="${type}" data-page-direction="-1" ${page<=1?'disabled':''}>Anterior</button><strong>Página ${page} de ${pages}</strong><button type="button" data-finance-page="${type}" data-page-direction="1" ${page>=pages?'disabled':''}>Siguiente</button></nav>`;
+ }
  function renderFinance(){
   const sec=q('sec-finanzas');if(!sec)return;
-  let root=q('crm-finance-main');if(!root){root=document.createElement('div');root.id='crm-finance-main';sec.append(root);root.innerHTML=`<div class="crm-page-title"><h2>Finanzas</h2><p>Consulta lo cobrado y lo pendiente, sin mezclar monedas.</p></div><form id="crm-finance-form" class="crm-panel crm-finance-filter"><label>Desde<input id="crm-finance-from" type="date"></label><label>Hasta<input id="crm-finance-to" type="date"></label><button class="crm-primary">Consultar</button><button type="button" class="crm-secondary" data-crm-action="finance-all">Todo el historial</button></form><div id="crm-finance-results"></div>`;q('crm-finance-from').value='';q('crm-finance-to').value='';q('crm-finance-form').addEventListener('submit',e=>{e.preventDefault();renderFinance();});}
-  const from=q('crm-finance-from').value,to=q('crm-finance-to').value;if(from&&to&&from>to){q('crm-finance-results').innerHTML='<p role="alert">La fecha inicial debe ser anterior a la final.</p>';return;}
-  const list=apps().filter(a=>C.inRange(a,from,to)),m=C.metrics(list),pending=list.filter(a=>C.remaining(a)>0).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
-  q('crm-finance-results').innerHTML=`<div class="crm-stat-grid crm-three-stats">${kpi('Cobrado',C.money(m.PEN.cobrado,m.USD.cobrado))}${kpi('Por cobrar',C.money(m.PEN.porCobrar,m.USD.porCobrar))}${kpi('Sesiones atendidas sin pagar',C.money(m.PEN.vencido,m.USD.vencido))}</div><article class="crm-panel"><h3>Pagos registrados · historial anterior y actual</h3>${list.some(a=>C.paid(a)>0)?`<div class="crm-table-scroll"><table class="crm-table"><thead><tr><th>Fecha de cita</th><th>Paciente</th><th>Cobrado</th><th>Registro</th></tr></thead><tbody>${list.filter(a=>C.paid(a)>0).sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.patientName)}</td><td>${C.currency(a)==='USD'?'US$':'S/'} ${C.paid(a).toFixed(2)}</td><td>${Array.isArray(a.paymentHistory)&&a.paymentHistory.length?'Con movimientos detallados':'Pago de la versión anterior / sin desglose'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="crm-empty">No hay cobros registrados en el periodo seleccionado.</p>'}<p class="crm-note">Los pagos antiguos marcados como pagados se reconocen por la tarifa de la cita. Se conserva el importe acumulado de abonos registrados; no se inventan fechas ni movimientos que no existían.</p></article><article class="crm-panel"><div class="crm-panel-head"><h3>Pagos pendientes</h3><button data-crm-action="finance-report">Ver reportes</button></div>${pending.length?`<div class="crm-table-scroll"><table class="crm-table"><thead><tr><th>Fecha</th><th>Paciente</th><th>Saldo</th><th></th></tr></thead><tbody>${pending.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.patientName)}</td><td>${C.currency(a)==='USD'?'US$':'S/'} ${C.remaining(a).toFixed(2)}</td><td><button class="crm-secondary" data-exp-action="pay" data-id="${esc(a.id)}">Registrar pago</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="crm-empty">No hay pagos pendientes en este periodo.</p>'}<p class="crm-note">Los importes se agrupan por fecha de cita. Para un abono parcial, abre “Registrar pago” y guarda el importe recibido.</p></article>`;
+  let root=q('crm-finance-main');if(!root){root=document.createElement('div');root.id='crm-finance-main';root.className='crm-finance-history';sec.append(root);}
+  const [from,to]=selectedFinanceRange();
+  const list=apps().filter(a=>C.inRange(a,from,to));
+  const paid=list.filter(a=>C.paid(a)>0).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.time||'').localeCompare(String(a.time||'')));
+  const pending=list.filter(a=>!C.cancelled(a)&&C.remaining(a)>0).sort((a,b)=>String(a.date||'').localeCompare(String(b.date||'')));
+  financePaidPage=Math.min(Math.max(1,financePaidPage),Math.max(1,Math.ceil(paid.length/PAGE_SIZE)));
+  financePendingPage=Math.min(Math.max(1,financePendingPage),Math.max(1,Math.ceil(pending.length/PAGE_SIZE)));
+  const paidRows=paid.slice((financePaidPage-1)*PAGE_SIZE,financePaidPage*PAGE_SIZE),pendingRows=pending.slice((financePendingPage-1)*PAGE_SIZE,financePendingPage*PAGE_SIZE);
+  const periodLabel=(from||to)?`${from||'Inicio'} al ${to||'Hoy'}`:'Todo el tiempo';
+  root.innerHTML=`<article class="crm-panel"><div class="crm-panel-head"><div><h3>Pagos registrados · historial anterior y actual</h3><p class="crm-note">${esc(periodLabel)} · Mostrando 10 registros por página</p></div></div>${paid.length?`<div class="crm-table-scroll"><table class="crm-table"><thead><tr><th>Fecha de cita</th><th>Paciente</th><th>Cobrado</th><th>Registro</th></tr></thead><tbody>${paidRows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.patientName)}</td><td>${C.currency(a)==='USD'?'US$':'S/'} ${C.paid(a).toFixed(2)}</td><td>${Array.isArray(a.paymentHistory)&&a.paymentHistory.length?'Con movimientos detallados':'Pago anterior / sin desglose'}</td></tr>`).join('')}</tbody></table></div>${financePager('paid',paid.length,financePaidPage)}`:'<p class="crm-empty">No hay cobros registrados en este periodo.</p>'}<p class="crm-note">Las fechas corresponden a las citas. Los cobros anteriores sin desglose no se convierten en movimientos inventados.</p></article><article class="crm-panel"><div class="crm-panel-head"><h3>Pagos pendientes</h3></div>${pending.length?`<div class="crm-table-scroll"><table class="crm-table"><thead><tr><th>Fecha</th><th>Paciente</th><th>Saldo</th><th></th></tr></thead><tbody>${pendingRows.map(a=>`<tr><td>${esc(a.date)}</td><td>${esc(a.patientName)}</td><td>${C.currency(a)==='USD'?'US$':'S/'} ${C.remaining(a).toFixed(2)}</td><td><button class="crm-secondary" data-exp-action="pay" data-id="${esc(a.id)}">Registrar pago</button></td></tr>`).join('')}</tbody></table></div>${financePager('pending',pending.length,financePendingPage)}`:'<p class="crm-empty">No hay pagos pendientes en este periodo.</p>'}</article>`;
  }
+ document.addEventListener('click',e=>{const b=e.target.closest('[data-finance-page]');if(!b)return;const dir=Number(b.dataset.pageDirection)||0;const target=b.dataset.financePage;if(target==='paid')financePaidPage+=dir;else if(target==='pending')financePendingPage+=dir;renderFinance();b.ownerDocument.getElementById('crm-finance-main')?.querySelector('article')?.scrollIntoView({block:'nearest',behavior:'smooth'});});
  window.renderCRMFinanceInsights=renderFinance;
+ document.addEventListener('click',e=>{if(e.target.closest('[id^=btn-fp-],#finance-custom-range button,.v23-date-nav button'))setTimeout(()=>{financePaidPage=1;financePendingPage=1;renderFinance();},0)});
+ document.addEventListener('change',e=>{if(e.target.matches('#finance-reference-date,#finance-custom-start,#finance-custom-end'))setTimeout(()=>{financePaidPage=1;financePendingPage=1;renderFinance();},0)});
  window.renderV2Cash=()=>{
   const input=q('v2-cash-date');if(!input)return;if(!input.value)input.value=C.dateKey();
   const list=apps().filter(a=>a.date===input.value),m=C.metrics(list),received=list.filter(a=>C.paid(a)>0),pending=list.filter(a=>a.status==='completada'&&C.remaining(a)>0);
@@ -94,7 +121,7 @@
   if(errors.length){const retry=document.createElement('button');retry.className='crm-secondary';retry.textContent='Reintentar';retry.onclick=()=>location.reload();banner.append(retry);}
  }
  function renderCurrent(){
-  const renderers={inicio:renderDashboard,citas:window.renderAppointments,pacientes:window.renderV2CRM,clinica:window.renderV2Clinical,sesiones:renderNotes,evaluaciones:window.renderV3Evaluations,documentos:window.renderV3Documents,finanzas:renderFinance,caja:window.renderV2Cash,recepcion:window.renderV2Reception,alertas:renderReminders};
+  const renderers={inicio:renderDashboard,citas:window.renderAppointments,pacientes:window.renderV2CRM,clinica:window.renderV2Clinical,sesiones:renderNotes,evaluaciones:window.renderV3Evaluations,documentos:window.renderV3Documents,finanzas:()=>{window.updateStatsDashboard?.();renderFinance();},caja:window.renderV2Cash,recepcion:window.renderV2Reception,alertas:renderReminders};
   try{renderers[current]?.();if(current==='citas')window.updateStatsDashboard?.();if(current==='sistema')q('crm-connection').textContent=navigator.onLine?'Con conexión a internet.':'Sin conexión.';}catch(error){console.error('Error al abrir '+current,error);const sec=q('sec-'+current);let box=sec?.querySelector('.crm-render-error');if(!box&&sec){box=document.createElement('p');box.className='crm-render-error';sec.prepend(box);}if(box)box.textContent='No se pudo mostrar esta sección. Recarga la página para intentar nuevamente.';}
   loadStatus();
  }
