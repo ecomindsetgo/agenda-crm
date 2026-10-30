@@ -31,7 +31,7 @@ import {
     EmailAuthProvider, reauthenticateWithCredential
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import {
-    getFirestore, doc, setDoc, deleteDoc, getDocs, runTransaction,
+    getFirestore, doc, setDoc, deleteDoc, getDocs, writeBatch, runTransaction,
     onSnapshot, collection, updateDoc
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
@@ -449,6 +449,7 @@ if (app) {
                 if (window.renderV2Dashboard) window.renderV2Dashboard();
                 if (window.renderManualBlockList) window.renderManualBlockList();
                 if (window.actualizarGridHorarios && !document.getElementById('modal-horario')?.classList.contains('hidden')) window.actualizarGridHorarios();
+                if (window.refreshAgendaImportPreview && !document.getElementById('modal-agenda-import')?.classList.contains('hidden')) window.refreshAgendaImportPreview();
                 notify();
             }, syncError('appointments', 'citas'));
 
@@ -460,6 +461,7 @@ if (app) {
                 updatePatientDropdowns();
                 updateStatsDashboard();
                 if (window.renderV2Dashboard) window.renderV2Dashboard();
+                if (window.refreshAgendaImportPreview && !document.getElementById('modal-agenda-import')?.classList.contains('hidden')) window.refreshAgendaImportPreview();
                 notify();
             }, syncError('patients', 'pacientes'));
             const unsubHistories = onSnapshot(
@@ -1636,6 +1638,193 @@ window.printClinicalHistory = async function() {
                 appointment.packageConsumed = false;
             }
         }
+
+        // ─── IMPORTAR CITAS DESDE EXCEL ──────────────────────────────────────────
+        let agendaImportDraft = [];
+        let agendaImportPreview = null;
+        let agendaImportUser = '';
+        let agendaImportBusy = false;
+        const agendaCore = window.AgendaImportCore;
+
+        function agendaImportMessage(message, bad = false) {
+            const el = document.getElementById('agenda-import-message');
+            if (el) { el.textContent = message; el.className = 'text-sm ' + (bad ? 'text-red-700' : 'text-slate-600'); }
+        }
+        window.openAgendaImportModal = function () {
+            if (!state.currentUser) { alert('Inicia sesión para importar citas.'); return; }
+            agendaImportDraft = []; agendaImportPreview = null; agendaImportUser = state.currentUser.uid;
+            const file = document.getElementById('agenda-import-file'); if (file) file.value = '';
+            const create = document.getElementById('agenda-import-create-patients'); if (create) create.checked = false;
+            document.getElementById('agenda-import-preview')?.classList.add('hidden');
+            const btn = document.getElementById('agenda-import-confirm'); if (btn) btn.disabled = true;
+            agendaImportMessage('Selecciona un Excel para mostrar el resultado de la validación.');
+            document.getElementById('modal-agenda-import')?.classList.remove('hidden');
+        };
+        window.closeAgendaImportModal = function () {
+            if (agendaImportBusy) return;
+            document.getElementById('modal-agenda-import')?.classList.add('hidden');
+            agendaImportDraft = []; agendaImportPreview = null;
+        };
+        function agendaCsv(rows) {
+            return '\uFEFF' + rows.map(cells => cells.map(v => window.CRMCore.csvCell(v)).join(';')).join('\r\n');
+        }
+        function agendaDownloadCsv(rows, name) {
+            const blob = new Blob([agendaCsv(rows)], { type:'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a'); anchor.href = url; anchor.download = name;
+            document.body.appendChild(anchor); anchor.click(); anchor.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 10000);
+        }
+        window.downloadAgendaImportTemplate = function () {
+            // Plantilla XLSX preconstruida: no depende de la conexión al CDN de SheetJS.
+            const link = document.createElement('a');
+            link.href = 'Plantilla_Importar_Citas.xlsx';
+            link.download = 'Plantilla_Importar_Citas.xlsx';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        };
+        function agendaParseCsv(text) {
+            // Compatible con CSV de Excel (punto y coma o coma), incluyendo comillas y saltos de línea.
+            const first = text.replace(/^\uFEFF/,'').split(/\r?\n/,1)[0] || '';
+            const delim = (first.match(/;/g)||[]).length >= (first.match(/,/g)||[]).length ? ';' : ',';
+            const rows=[]; let row=[], cell='', quoted=false;
+            text = text.replace(/^\uFEFF/,'');
+            for(let i=0;i<text.length;i++) {
+                const ch=text[i];
+                if(ch==='"') { if(quoted && text[i+1]==='"') {cell+='"';i++;} else quoted=!quoted; }
+                else if(ch===delim && !quoted) {row.push(cell);cell='';}
+                else if((ch==='\n'||ch==='\r') && !quoted) {if(ch==='\r'&&text[i+1]==='\n')i++;row.push(cell);rows.push(row);row=[];cell='';}
+                else cell+=ch;
+            }
+            if(quoted)throw Error('Las comillas del CSV no están cerradas.');
+            if(cell || row.length){row.push(cell);rows.push(row);}
+            return rows;
+        }
+        window.prepareAgendaExcelImport = async function (input) {
+            const file = input?.files?.[0];
+            agendaImportDraft = []; agendaImportPreview = null;
+            if (!file) return;
+            document.getElementById('agenda-import-confirm').disabled = true;
+            document.getElementById('agenda-import-preview')?.classList.add('hidden');
+            if(file.size > 5*1024*1024) {agendaImportMessage('El archivo supera 5 MB. Divide las citas en varios archivos.',true);return;}
+            try {
+                agendaImportMessage('Leyendo y validando archivo…');
+                let rows;
+                if (/\.csv$/i.test(file.name)) {
+                    rows = agendaParseCsv(await file.text());
+                } else if (/\.xlsx?$/i.test(file.name)) {
+                    if (typeof XLSX === 'undefined') throw Error('No se cargó el lector Excel. Verifica tu conexión o guarda el archivo como CSV desde Excel.');
+                    const workbook = XLSX.read(await file.arrayBuffer(),{type:'array',cellDates:false});
+                    const sheetName = workbook.SheetNames.find(n=>n.toLowerCase()==='citas') || workbook.SheetNames.find(n=>n.toLowerCase()==='horario semanal') || workbook.SheetNames[0];
+                    rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName],{header:1,raw:true,defval:''});
+                } else throw Error('Selecciona un archivo .xlsx, .xls o .csv.');
+                if (agendaImportUser !== state.currentUser?.uid) throw Error('La sesión ha cambiado. Vuelve a iniciar la importación.');
+                agendaImportDraft = agendaCore.parseRows(rows);
+                window.refreshAgendaImportPreview();
+            } catch (error) {
+                console.error('[Importación de citas]',error);
+                agendaImportMessage(error.message || 'No se pudo leer el archivo.',true);
+            }
+        };
+        function agendaReviewWith(patients, appointments, blocks) {
+            return agendaCore.review(agendaImportDraft,{
+                patients, appointments, blocks,
+                createPatients: !!document.getElementById('agenda-import-create-patients')?.checked,
+                defaultRate: (attention,modality,currency)=>getRate(attention,modality,'sesion',currency)
+            });
+        }
+        window.refreshAgendaImportPreview = function () {
+            const btn = document.getElementById('agenda-import-confirm');
+            if (btn) btn.disabled = true;
+            if (!agendaImportDraft.length) return;
+            if (!state.appointmentsReady || !state.patientsReady || state.syncErrors?.appointments || state.syncErrors?.patients) {
+                agendaImportMessage('Los pacientes o las citas todavía no han cargado completamente desde Firebase. Comprueba la conexión.',true);
+                return;
+            }
+            agendaImportPreview = agendaReviewWith(state.patients,state.appointments,state.manualBlocks);
+            const data = agendaImportPreview;
+            const body = document.getElementById('agenda-import-rows');
+            if (body) body.innerHTML = data.rows.slice(0,80).map(r => {
+                const info = r.issues.length ? r.issues.join(' · ') : r.state==='new' ? 'Válida · crear paciente' : 'Válida · paciente registrado';
+                const style = r.issues.length?'color:#b91c1c':'color:#166534';
+                return `<tr class="border-t border-slate-100"><td class="p-2">${r.line}</td><td class="p-2">${escapeHTML(r.patientName)}</td><td class="p-2">${escapeHTML(r.date)}</td><td class="p-2">${escapeHTML(r.time)}</td><td class="p-2">${escapeHTML(r.modality)}</td><td class="p-2">${r.currency==='USD'?'US$':'S/'} ${Number(r.cost||0).toFixed(2)}</td><td class="p-2" style="${style}">${escapeHTML(info)}</td></tr>`;
+            }).join('');
+            document.getElementById('agenda-import-preview')?.classList.remove('hidden');
+            agendaImportMessage(`Archivo: ${data.rows.length} filas · ${data.ready.length} citas válidas · ${data.skipped.length} omitidas · ${data.newPatients} pacientes nuevos. ${data.rows.length>80?'Se muestran las primeras 80 filas.':''} Solo se guardarán las válidas.`);
+            if (btn) {btn.disabled = !data.ready.length || agendaImportBusy;btn.textContent = `Crear ${data.ready.length} cita(s) validadas`;}
+        };
+        window.confirmAgendaExcelImport = async function () {
+            if (agendaImportBusy || !agendaImportPreview?.ready.length || !state.currentUser || agendaImportUser !== state.currentUser.uid) return;
+            const expectedCount = agendaImportPreview.ready.length;
+            if (!confirm(`Se crearán ${expectedCount} citas y hasta ${agendaImportPreview.newPatients} pacientes nuevos. Las filas con errores se omitirán. No se modificarán citas existentes. ¿Confirmar?`)) return;
+            agendaImportBusy = true;
+            const btn = document.getElementById('agenda-import-confirm');
+            if(btn){btn.disabled=true;btn.textContent='Verificando en Firebase…';}
+            try {
+                const uid = state.currentUser.uid;
+                const appsRef = collection(db,'artifacts',appId,'users',uid,'appointments');
+                const patientsRef = collection(db,'artifacts',appId,'users',uid,'patients');
+                // Una lectura reciente antes de escribir reduce conflictos con otras pestañas/dispositivos.
+                const [appsSnap,patientsSnap] = await Promise.all([getDocs(appsRef),getDocs(patientsRef)]);
+                if (state.currentUser?.uid !== uid) throw Error('La sesión cambió. Se canceló la importación.');
+                const allApps = appsSnap.docs.map(d=>({id:d.id,...d.data()}));
+                const patients = patientsSnap.docs.map(d=>({id:d.id,...d.data()}));
+                const current = agendaReviewWith(patients,allApps.filter(a=>!a.isManualBlock&&a.recordType!=='manual_block'),allApps.filter(a=>a.isManualBlock||a.recordType==='manual_block'));
+                if(current.ready.length !== expectedCount || current.ready.some((row,i)=>row.line!==agendaImportPreview.ready[i].line)) {
+                    state.patients = patients;
+                    state.appointments = allApps.filter(a=>!a.isManualBlock&&a.recordType!=='manual_block');
+                    state.manualBlocks = allApps.filter(a=>a.isManualBlock||a.recordType==='manual_block');
+                    window.refreshAgendaImportPreview();
+                    throw Error('La agenda o los pacientes cambiaron desde la vista previa. Revisa los conflictos antes de confirmar otra vez.');
+                }
+                const now = new Date().toISOString();
+                const newPatients = new Map();
+                const entries=[];
+                for(const row of current.ready) {
+                    let patientId = row.patientId;
+                    if(!patientId){
+                        if(!newPatients.has(row.newPatientKey)) {
+                            const id='pat_import_'+crypto.randomUUID();
+                            const patientData = {name:row.patientName,dni:row.dni,phone:row.phone,currency:row.currency,origen:'otro',leadStatus:'nuevo',createdAt:now,updatedAt:now,importSource:'excel'};
+                            newPatients.set(row.newPatientKey,{id,data:patientData});
+                            entries.push({ref:doc(db,'artifacts',appId,'users',uid,'patients',id),data:patientData});
+                        }
+                        patientId=newPatients.get(row.newPatientKey).id;
+                    }
+                    const amount=row.paidAmount;
+                    const appointmentData = {
+                        patientId, patientName:row.patientName,date:row.date,time:row.time,
+                        modality:row.modality,attentionType:row.attentionType,rateType:'sesion',
+                        packageId:null,packageType:null,packageConsumed:false,
+                        sessionValue:row.cost,cost:row.cost,currency:row.currency,
+                        paidAmount:amount,paymentStatus:amount<=0?'pendiente':amount>=row.cost?'pagado':'parcial',
+                        status:row.status,notes:row.notes,createdAt:now,updatedAt:now,importSource:'excel',
+                        ...(amount>0?{paymentHistory:[{id:'legacy_import_'+crypto.randomUUID(),type:'legacy_balance',amount,date:row.date,method:'Importación Excel',createdAt:now,createdBy:uid,note:'Saldo histórico del archivo; comprobante original no disponible'}]}:{})
+                    };
+                    entries.push({ref:doc(db,'artifacts',appId,'users',uid,'appointments','app_excel_'+crypto.randomUUID()),data:appointmentData});
+                }
+                let written=0;
+                // Firestore admite lotes de hasta 500 operaciones; cada lote es atómico.
+                for(let i=0;i<entries.length;i+=400){
+                    if (state.currentUser?.uid !== uid) throw Error('La sesión cambió. Se interrumpió la importación.');
+                    const batch=writeBatch(db);
+                    entries.slice(i,i+400).forEach(entry=>batch.set(entry.ref,entry.data));
+                    if(btn) btn.textContent=`Guardando lote ${Math.floor(i/400)+1}…`;
+                    await batch.commit();
+                    written += entries.slice(i,i+400).filter(e=>e.ref.parent.id==='appointments').length;
+                }
+                alert(`Importación completada: ${written} citas creadas y ${newPatients.size} pacientes nuevos. ${current.skipped.length} filas omitidas.`);
+                agendaImportBusy = false;
+                window.closeAgendaImportModal();
+            } catch (error) {
+                console.error('[Guardar importación de Excel]',error);
+                agendaImportMessage('No se completó la importación: '+error.message+' Si hubo una interrupción entre lotes, vuelve a cargar el archivo y revisa la vista previa.',true);
+            } finally {
+                agendaImportBusy=false;
+                if(btn){btn.textContent='Crear citas validadas';btn.disabled=!agendaImportPreview?.ready.length;}
+            }
+        };
 
         // ─── BLOQUEOS MANUALES DE AGENDA ──────────────────────────────────────────
         function minutesOf(timeStr) {
@@ -3611,11 +3800,6 @@ window.printClinicalHistory = async function() {
         window.downloadHorarioExcel = function () {
             const btn = document.getElementById('btn-descargar-horario-excel');
 
-            if (typeof XLSX === 'undefined') {
-                alert('No se pudo cargar el generador de Excel. Revisa tu conexión a internet e inténtalo nuevamente.');
-                return;
-            }
-
             if (!state.horarioWeekStart) {
                 state.horarioWeekStart = getMondayOf(new Date());
             }
@@ -3639,6 +3823,17 @@ window.printClinicalHistory = async function() {
                     return da.localeCompare(db);
                 });
 
+            if (typeof XLSX === 'undefined') {
+                const simpleRows = [['PACIENTE','FECHA','HORA','MODALIDAD','PRECIO','COBRADO','ESTADO','OBSERVACION','MONEDA']];
+                weeklyAppointments.forEach(a => simpleRows.push([
+                    a.patientName || 'Paciente',a.date||'',String(a.time||'').slice(0,5),a.modality||'',
+                    Number(a.cost||0),window.CRMCore.paid(a),a.status||'pendiente',a.notes||'',a.currency==='USD'?'USD':'PEN'
+                ]));
+                agendaDownloadCsv(simpleRows,`Horario_Semanal_${startStr}.csv`);
+                alert('Se descargó el horario en CSV compatible con Excel. Para descargar .xlsx, verifica la conexión que permite cargar el generador de Excel.');
+                return;
+            }
+
             const monthName = weekEnd.toLocaleDateString('es-PE', { month: 'long' });
             const monthTitle = monthName.charAt(0).toUpperCase() + monthName.slice(1);
             const rangeTitle = `DEL ${weekStart.getDate()} AL ${weekEnd.getDate()} DE ${monthTitle.toUpperCase()}`;
@@ -3653,8 +3848,7 @@ window.printClinicalHistory = async function() {
             // Encabezados exactamente en el orden solicitado
             rows.push(['ITEM', 'PACIENTE', 'MODALIDAD', 'FECHA', 'HORA', 'PRECIO', 'SI', 'COBRADO', 'OBSERVACION']);
 
-            let totalPrecio = 0;
-            let totalCobrado = 0;
+            const totals = {PEN:{cost:0,paid:0,count:0},USD:{cost:0,paid:0,count:0}};
 
             weeklyAppointments.forEach((a, index) => {
                 const cost = Number(a.cost || 0);
@@ -3662,8 +3856,9 @@ window.printClinicalHistory = async function() {
                 const currency = a.currency === 'USD' ? 'USD' : 'PEN';
                 const symbol = currency === 'USD' ? '$' : 'S/';
 
-                totalPrecio += cost;
-                totalCobrado += paidAmount;
+                totals[currency].cost += cost;
+                totals[currency].paid += paidAmount;
+                totals[currency].count++;
 
                 const statusLabel = {
                     completada: 'REALIZADO',
@@ -3686,15 +3881,18 @@ window.printClinicalHistory = async function() {
                     a.date || '',
                     a.time ? String(a.time).slice(0, 5) : '',
                     cost > 0 ? cost : 0,
-                    paid ? 'SI' : '',
-                    paid ? cost : 0,
+                    paidAmount > 0 ? 'SI' : '',
+                    paidAmount,
                     observation
                 ]);
             });
 
-            // Fila de total
+            // Totales separados por moneda: nunca sumar PEN con USD.
             rows.push([]);
-            rows.push(['', '', '', '', 'TOTAL', totalPrecio, '', totalCobrado, '']);
+            const totalsStartRow = rows.length;
+            if (totals.PEN.count) rows.push(['', '', '', '', 'TOTAL S/', totals.PEN.cost, '', totals.PEN.paid, '']);
+            if (totals.USD.count) rows.push(['', '', '', '', 'TOTAL USD', totals.USD.cost, '', totals.USD.paid, '']);
+            if (!totals.PEN.count && !totals.USD.count) rows.push(['', '', '', '', 'TOTAL S/', 0, '', 0, '']);
 
             const ws = XLSX.utils.aoa_to_sheet(rows);
 
@@ -3764,7 +3962,7 @@ window.printClinicalHistory = async function() {
                     }
 
                     // Total
-                    if (r === range.e.r) {
+                    if (r >= totalsStartRow) {
                         cell.font = { bold: true };
                         cell.fill = { fgColor: { rgb: 'E2E8F0' } };
                         cell.border = {
@@ -3782,6 +3980,21 @@ window.printClinicalHistory = async function() {
                 if (timeCell) timeCell.t = 's';
             }
 
+            // Formatos numéricos realmente compatibles con Excel (propiedad .z de SheetJS).
+            weeklyAppointments.forEach((a,index) => {
+                const fmt = a.currency === 'USD' ? '"US$" #,##0.00' : '"S/" #,##0.00';
+                for (const c of [5,7]) {
+                    const cell = ws[XLSX.utils.encode_cell({r:index+5,c})];
+                    if (cell) cell.z=fmt;
+                }
+            });
+            for (let r=totalsStartRow;r<rows.length;r++) {
+                const fmt = rows[r][4] === 'TOTAL USD' ? '"US$" #,##0.00' : '"S/" #,##0.00';
+                for (const c of [5,7]) {
+                    const cell = ws[XLSX.utils.encode_cell({r,c})];
+                    if (cell) cell.z=fmt;
+                }
+            }
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, ws, 'Horario semanal');
 

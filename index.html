@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/app.css?v=crm-v8-20">
-<link rel="stylesheet" href="css/crm.css?v=crm-v8-20">
+    <link rel="stylesheet" href="css/app.css?v=crm-v8-21">
+<link rel="stylesheet" href="css/crm.css?v=crm-v8-21">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#356b69">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -367,6 +367,7 @@
                         </div>
                         <div class="v34-page-actions">
                             <button onclick="openHorarioModal()" class="v34-btn secondary"><svg class="v2-icon"><use href="#i-lock"></use></svg><span>Bloquear horario</span></button>
+                            <button onclick="openAgendaImportModal()" class="v34-btn secondary" id="btn-import-agenda"><svg class="v2-icon"><use href="#i-download"></use></svg><span>Importar Excel</span></button>
                             <button onclick="openAppointmentModal()" class="v34-btn primary"><svg class="v2-icon"><use href="#i-plus"></use></svg><span>Nueva cita</span></button>
                         </div>
                     </div>
@@ -1619,6 +1620,26 @@
     </div>
 
 
+
+<!-- Importación de citas desde Excel; revisión obligatoria antes de escribir en Firebase. -->
+<div id="modal-agenda-import" class="hidden fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-60 p-3 md:p-6" role="dialog" aria-modal="true" aria-labelledby="agenda-import-title">
+  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-y-auto p-5 md:p-8 space-y-5">
+    <div class="flex items-start justify-between gap-3">
+      <div><h2 id="agenda-import-title" class="text-xl font-extrabold text-slate-800">Importar citas desde Excel</h2><p class="text-sm text-slate-500 mt-1">Carga un archivo, revisa la vista previa y confirma las citas que deseas registrar. No modifica las citas existentes.</p></div>
+      <button type="button" onclick="closeAgendaImportModal()" aria-label="Cerrar importación" class="text-xl font-bold text-slate-500 hover:text-slate-800">✕</button>
+    </div>
+    <div class="rounded-2xl border border-[#d3e6e2] bg-[#f3faf8] p-4 space-y-3">
+      <div class="flex items-center justify-between gap-3 flex-wrap"><p class="text-sm font-semibold text-[#356b69]">1. Descarga la plantilla y coloca una cita por fila.</p><button type="button" onclick="downloadAgendaImportTemplate()" class="v31-btn v31-btn-ghost">Descargar plantilla Excel</button></div>
+      <p class="text-xs text-slate-600">Obligatorias: <strong>Paciente, Fecha y Hora</strong>. Opcionales: modalidad, tipo de atención, precio, cobrado, estado, observaciones, DNI, teléfono y moneda. Fechas en DD/MM/AAAA, horas en HH:MM. También admite el Excel exportado del horario semanal.</p>
+      <div><label for="agenda-import-file" class="text-xs font-bold text-slate-700 block mb-1.5">2. Selecciona archivo (.xlsx, .xls o .csv)</label><input id="agenda-import-file" type="file" accept=".xlsx,.xls,.csv" onchange="prepareAgendaExcelImport(this)" class="v2-field w-full" /></div>
+      <label class="text-sm text-slate-700 flex items-start gap-2"><input id="agenda-import-create-patients" type="checkbox" onchange="refreshAgendaImportPreview()" class="mt-1 accent-[#356b69]"/><span>Crear también los pacientes que no estén registrados (se creará una ficha básica con los datos disponibles del Excel). <strong>Desactivado por seguridad.</strong></span></label>
+    </div>
+    <div id="agenda-import-message" class="text-sm text-slate-600" role="status" aria-live="polite">Selecciona un Excel para mostrar el resultado de la validación.</div>
+    <div id="agenda-import-preview" class="hidden overflow-x-auto rounded-xl border border-slate-200"><table class="w-full text-xs text-left" style="min-width:780px"><thead class="bg-slate-100 text-slate-700"><tr><th class="p-2">Fila</th><th class="p-2">Paciente</th><th class="p-2">Fecha</th><th class="p-2">Hora</th><th class="p-2">Modalidad</th><th class="p-2">Precio</th><th class="p-2">Resultado</th></tr></thead><tbody id="agenda-import-rows"></tbody></table></div>
+    <div class="flex items-center justify-end gap-3 flex-wrap"><button type="button" class="v31-btn v31-btn-ghost" onclick="closeAgendaImportModal()">Cancelar</button><button id="agenda-import-confirm" type="button" onclick="confirmAgendaExcelImport()" disabled class="v31-btn v31-btn-primary disabled:opacity-40 disabled:cursor-not-allowed">Crear citas validadas</button></div>
+  </div>
+</div>
+
 <!-- Modal de Horarios -->
 <div id="modal-horario" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
     <div class="bg-white w-full max-w-5xl rounded-3xl shadow-2xl p-6 md:p-8 max-h-[90vh] overflow-y-auto">
@@ -1732,13 +1753,14 @@
     </div>
 
     <!-- SheetJS: generación de archivos Excel (.xlsx) -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-    <script src="js/crm-core.js?v=crm-v8-20"></script>
-    <script type="module" src="js/app.js?v=crm-v8-20"></script>
-    <script src="js/ui.js?v=crm-v8-20"></script>
-    <script src="js/tasks.js?v=crm-v8-20" defer></script>
-    <script src="js/crm-platform.js?v=crm-v8-20" defer></script>
-    <script src="js/experience.js?v=crm-v8-20" defer></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" onerror="this.onerror=null;this.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'"></script>
+    <script src="js/crm-core.js?v=crm-v8-21"></script>
+    <script src="js/agenda-import-core.js?v=crm-v8-21"></script>
+    <script type="module" src="js/app.js?v=crm-v8-21"></script>
+    <script src="js/ui.js?v=crm-v8-21"></script>
+    <script src="js/tasks.js?v=crm-v8-21" defer></script>
+    <script src="js/crm-platform.js?v=crm-v8-21" defer></script>
+    <script src="js/experience.js?v=crm-v8-21" defer></script>
 <div id="ct-overlay" class="ct-overlay no-print"><section class="ct-dialog" role="dialog" aria-modal="true" aria-labelledby="ct-title"><div class="ct-head"><h2 id="ct-title">Tareas de mi consultorio</h2><button id="ct-close" type="button" aria-label="Cerrar tareas">✕</button></div><p>Organiza tus pendientes administrativos. Se guardan en este navegador por cuenta.</p><form id="ct-form" class="ct-form"><label>Actividad<input id="ct-text" required maxlength="180" placeholder="Ej. Revisar los cobros de la semana"></label><label>Fecha límite<input id="ct-date" type="date"></label><button type="submit">＋ Agregar tarea</button></form><label class="ct-filter">Mostrar<select id="ct-filter"><option value="pending">Pendientes</option><option value="all">Todas</option><option value="done">Completadas</option></select></label><div id="ct-list"></div></section></div>
 </body>
 </html>

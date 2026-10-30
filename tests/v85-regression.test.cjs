@@ -4,7 +4,7 @@ const path = require('node:path');
 const root = path.join(__dirname, '..');
 const app = fs.readFileSync(path.join(root,'js/app.js'),'utf8');
 const css = fs.readFileSync(path.join(root,'css/crm.css'),'utf8');
-assert.match(app, /v23-manual-slot"><span>Ocupado<\/span>/, 'bloqueo manual se muestra como Ocupado');
+assert.match(app, /v23-manual-slot"><span class="horario-screen-label">Ocupado por bloqueo<\/span><span class="horario-export-label">Ocupado<\/span>/, 'bloqueo manual se muestra ocupado y la exportación oculta el motivo');
 assert.doesNotMatch(app, /v23-manual-slot"><span>Bloqueado<\/span>/, 'no mostrar Bloqueado en horario');
 assert.match(app, /window\.removeAppointmentPermanently = async function\(aid\)/, 'función de eliminación');
 assert.match(app, /onclick="removeAppointmentPermanently\('\$\{a\.id\}'\)"/, 'botón eliminar ligado');
