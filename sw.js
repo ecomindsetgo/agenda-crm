@@ -1,6 +1,6 @@
 'use strict';
-const VERSION='consultorio-static-v8-21-20261030';
-const STATIC=['offline.html','index.html','css/app.css','css/crm.css','js/app.js','js/ui.js','js/tasks.js','js/crm-core.js','js/agenda-import-core.js','js/crm-platform.js','js/experience.js','assets/logo-lisbeth.png','assets/icons/icon-192.png','assets/icons/icon-512.png','manifest.webmanifest'];
+const VERSION='consultorio-static-v8-22-20261112';
+const STATIC=['offline.html','index.html','css/app.css','css/crm.css','js/app.js','js/ui.js','js/patients-export-core.js','js/patients-export.js','js/tasks.js','js/crm-core.js','js/agenda-import-core.js','js/crm-platform.js','js/experience.js','assets/logo-lisbeth.png','assets/icons/icon-192.png','assets/icons/icon-512.png','manifest.webmanifest'];
 const allowed=new Set(STATIC.map(path=>new URL(path,self.registration.scope).pathname));
 self.addEventListener('install',event=>event.waitUntil(caches.open(VERSION).then(cache=>cache.addAll(STATIC.map(path=>new Request(new URL(path,self.registration.scope),{cache:'reload'}))))));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('consultorio-static-')&&key!==VERSION).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));

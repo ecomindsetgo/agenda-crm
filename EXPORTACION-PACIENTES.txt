@@ -1,0 +1,31 @@
+CAMBIO IMPLEMENTADO: EXPORTACIÓN DE PACIENTES A EXCEL
+
+Ubicación: Pacientes / CRM > Segmentación y seguimiento CRM.
+
+1. Elegir el estado del paciente en el desplegable: Todos, Activos, Nuevos,
+   En tratamiento, Seguimiento, Pausados, Alta, Inactivos, etc.
+2. Opcional: escribir un nombre, DNI o teléfono en Buscar en CRM.
+3. Pulsar "Exportar Excel".
+
+El archivo contiene todos los registros que coinciden con los filtros (no
+solo los que aparecen en la página actual). Incluye información administrativa:
+contacto, estado, origen/canal, citas, saldos por moneda y fechas principales.
+NO incluye historias clínicas, observaciones, diagnósticos ni notas.
+
+Definición de "Activos": excluye los estados Pausado, Alta e Inactivo.
+"En tratamiento" agrupa los estados Atendido y Recurrente.
+
+Si falla la carga de la biblioteca de Excel externa, se genera CSV compatible
+con Excel automáticamente. La función no modifica datos de Firebase.
+
+Para publicar: subir el contenido del ZIP al repositorio, conservando la
+estructura de archivos. Los archivos nuevos son:
+- js/patients-export-core.js
+- js/patients-export.js
+
+Archivos modificados:
+- index.html
+- js/ui.js
+- sw.js (caché actualizado para la PWA)
+
+Pruebas automatizadas agregadas: tests/patients-export.test.cjs

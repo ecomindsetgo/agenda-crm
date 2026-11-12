@@ -452,8 +452,9 @@
                     <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
                         <div><h3 class="v2-section-title">Segmentación y seguimiento CRM</h3><p class="v2-section-hint">Prioriza pacientes por etapa, continuidad y pagos.</p></div>
                         <div class="flex flex-wrap gap-2">
-                            <select id="v2-crm-filter" onchange="renderV2CRM()" class="v2-field"><option value="todos">Todos los estados</option><option value="nuevo">Nuevos</option><option value="tratamiento">En tratamiento</option><option value="seguimiento">Seguimiento</option><option value="pausado">Pausados</option><option value="alta">Alta</option><option value="inactivo">Inactivos</option></select>
+                            <select id="v2-crm-filter" onchange="renderV2CRM()" class="v2-field" aria-label="Filtrar pacientes por estado"><option value="todos">Todos los estados</option><option value="activos">Activos</option><option value="contactado">Contactados</option><option value="interesado">Interesados</option><option value="cita_agendada">Primera cita</option><option value="nuevo">Nuevos</option><option value="tratamiento">En tratamiento</option><option value="seguimiento">Seguimiento</option><option value="pausado">Pausados</option><option value="alta">Alta</option><option value="inactivo">Inactivos</option></select>
                             <input id="v2-crm-search" oninput="renderV2CRM()" class="v2-field" placeholder="Buscar en CRM...">
+                            <button type="button" onclick="downloadPatientsExcel()" class="v2-secondary-btn" id="btn-export-patients-excel" title="Descargar todos los pacientes que coincidan con el estado y búsqueda seleccionados" aria-label="Exportar pacientes filtrados a Excel"><svg class="v2-icon"><use href="#i-download"></use></svg> Exportar Excel</button>
                             <button type="button" onclick="openPatientModal()" class="v2-primary-btn" id="v819-new-patient" aria-label="Crear paciente nuevo"><svg class="v2-icon"><use href="#i-plus"></use></svg> Nuevo paciente</button>
                         </div>
                     </div>
@@ -1757,7 +1758,9 @@
     <script src="js/crm-core.js?v=crm-v8-21"></script>
     <script src="js/agenda-import-core.js?v=crm-v8-21"></script>
     <script type="module" src="js/app.js?v=crm-v8-21"></script>
-    <script src="js/ui.js?v=crm-v8-21"></script>
+    <script src="js/patients-export-core.js?v=crm-v8-22"></script>
+    <script src="js/ui.js?v=crm-v8-22"></script>
+    <script src="js/patients-export.js?v=crm-v8-22"></script>
     <script src="js/tasks.js?v=crm-v8-21" defer></script>
     <script src="js/crm-platform.js?v=crm-v8-21" defer></script>
     <script src="js/experience.js?v=crm-v8-21" defer></script>
