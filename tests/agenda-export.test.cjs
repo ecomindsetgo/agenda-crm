@@ -17,7 +17,7 @@ function sandbox(xlsx=true){
  },writeFile(book,name){calls.push({book,name});}};
  const date=new Date('2026-10-26T10:00:00Z');
  const ctx={
-   window:{CRMCore:{paid:a=>a.paidAmount||0,isCenterMedical:()=>false,settlementPaid:()=>0,settlementState:()=> 'no_aplica'}},
+   window:{CRMCore:{paid:a=>a.paidAmount||0,isCenterMedical:()=>false}},
    document:{getElementById:()=>({disabled:false,textContent:'',innerHTML:''})},
    state:{horarioWeekStart:date,appointments:[{date:'2026-10-28',time:'10:00',patientName:'Paciente Prueba',status:'pendiente',cost:50,paidAmount:20,modality:'virtual',currency:'PEN',notes:''}]},
    getMondayOf:d=>d,

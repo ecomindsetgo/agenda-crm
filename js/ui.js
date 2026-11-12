@@ -2243,7 +2243,7 @@ function appointmentForm(){
         <div class="v35-field"><label id="app-cost-label">Precio (S/) *</label><input type="number" id="app-cost" min="0" step="0.50" value="50.00" required><span class="v35-help">Editable si necesitas ajustar la tarifa.</span></div>
         <div class="v35-field" id="app-payment-field"><label>Estado de pago *</label><select id="app-payment"><option value="pendiente">Pendiente de cobro</option><option value="parcial" disabled>Abono registrado</option><option value="pagado">Pagado</option><option value="no_aplica">No aplica</option></select></div>
       </div>
-      <div id="app-center-collection-note" class="hidden" style="margin-top:12px;padding:12px;border:1px solid #bae6fd;background:#f0f9ff;color:#075985;border-radius:12px;font-size:12px;line-height:1.5"><strong>Pago mediante centro médico.</strong> El paciente paga directamente al centro. Se registra un honorario fijo de S/60 para Lisbeth; no se marca como cobrado. Cuando el centro transfiera el dinero, registra la liquidación en Finanzas → Liquidaciones del centro médico.</div>
+      <div id="app-center-collection-note" class="hidden" style="margin-top:12px;padding:12px;border:1px solid #bae6fd;background:#f0f9ff;color:#075985;border-radius:12px;font-size:12px;line-height:1.5"><strong>Atención del centro médico.</strong> Honorario fijo de S/60. El centro paga a Lisbeth al culminar la atención; al marcar la cita como completada, la agenda lo registra automáticamente como recibido.</div>
       <div id="app-package-info" class="hidden" style="margin-top:12px"></div>
     </section>
 

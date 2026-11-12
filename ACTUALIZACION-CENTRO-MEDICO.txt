@@ -1,47 +1,33 @@
-ACTUALIZACION: PROCEDENCIA DE ATENCION Y LIQUIDACIONES DEL CENTRO MEDICO
-
-OBJETIVO
-Separar los pacientes particulares de los pacientes derivados por el centro medico.
-El paciente paga directamente al centro; el centro liquida S/ 60 por sesion a Lisbeth.
+ACTUALIZACION: PROCEDENCIA Y PAGO INMEDIATO DEL CENTRO MEDICO
 
 FICHA DEL PACIENTE
-- Nuevo campo: Procedencia de atencion.
-- Opciones: Particular / Centro medico.
-- El campo Origen del contacto (Instagram, WhatsApp, referido, etc.) se conserva
-  separado y no se reutiliza para identificar al centro medico.
-- La procedencia de la ficha se propone automaticamente al crear nuevas citas.
+- Campo independiente: Procedencia de atención: Particular / Centro médico.
+- Origen del contacto (Instagram, WhatsApp, referido, etc.) permanece separado.
+- La procedencia de la ficha se propone automáticamente en las nuevas citas.
 
-CITAS
-- La procedencia puede ajustarse en cada cita sin cambiar la ficha del paciente.
-- Para Centro medico se asigna un honorario de S/ 60.
-- No se habilita el registro de pago al paciente ni se marca como cobrado.
-- Al completar la cita, el honorario pasa a la lista de liquidaciones pendientes.
-- Las citas particulares conservan sus tarifas, paquetes y pagos actuales.
+CITAS DEL CENTRO MEDICO
+- Honorario fijo: S/60 por atención.
+- El paciente paga al centro médico.
+- El centro paga S/60 a Lisbeth cuando culmina la atención.
+- Al marcar la cita como Completada, se registra automáticamente como ingreso recibido.
+- No se solicita registrar transferencias, abonos, referencias ni liquidaciones.
+- Las citas programadas, canceladas o con inasistencia no generan ingreso.
+- El paciente no aparece con deuda pendiente frente a Lisbeth.
 
-FINANZAS > LIQUIDACIONES DEL CENTRO MEDICO
-- Muestra honorarios devengados, importes ya liquidados y saldo por liquidar.
-- Permite registrar pagos completos o parciales.
-- Cada movimiento guarda importe, fecha, referencia y usuario que lo registro.
-- No permite registrar una liquidacion por encima del saldo pendiente.
-- Los importes del centro no se suman al dinero cobrado a pacientes particulares.
+FINANZAS
+- Los S/60 se incluyen automáticamente en ingresos, caja y reportes al completar la cita.
+- Se identifican como Centro médico para distinguirlos de los pagos particulares.
+- No existe un módulo separado de liquidaciones.
+- Las deudas y pagos pendientes solo corresponden a pacientes particulares.
+- Los pacientes particulares conservan sus tarifas, paquetes y pagos manuales.
 
-PACIENTES Y EXCEL
-La ficha muestra una etiqueta Particular / Centro medico. La exportacion de pacientes
-incluye tambien la procedencia de atencion, sin incluir informacion clinica.
-
-IMPORTANTE PARA PACIENTES YA REGISTRADOS
-Los pacientes existentes aparecen como Particular hasta que se actualice su ficha.
-Al cambiar la procedencia en una ficha, el cambio se aplica a las nuevas citas.
-Las citas historicas conservan su procedencia original para no alterar registros
-financieros anteriores. Si una cita historica fue del centro medico, se puede editar
-esa cita y asignar Centro medico antes de revisar sus liquidaciones.
+DATOS EXISTENTES
+- No se crean colecciones ni se requiere migración de Firebase.
+- Los pacientes conservan la procedencia ya guardada.
+- Actualiza a Centro médico las fichas de los pacientes derivados para que sus nuevas
+  citas hereden esa procedencia.
+- Las citas completadas antiguas del centro también se reflejan como ingresos de S/60
+  por atención, según su estado completada.
 
 PUBLICACION
-Subir el contenido del ZIP conservando la estructura de carpetas. No requiere
-migracion de colecciones ni cambios manuales en Firebase; los nuevos campos se
-almacenan en los documentos de pacientes y citas existentes.
-
-PRUEBAS
-27 pruebas automatizadas de logica, exportacion, pagos y regresiones superadas.
-Las pruebas DOM/navegador requieren las dependencias jsdom y playwright, que no
-estaban instaladas en el entorno de validacion.
+Subir el contenido del ZIP conservando la estructura de carpetas.

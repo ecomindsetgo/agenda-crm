@@ -1,0 +1,18 @@
+ACTUALIZACION: PAGO INMEDIATO DEL CENTRO MEDICO (MODELO SIMPLE)
+
+- Se conserva en la ficha del paciente el campo Procedencia: Particular / Centro medico.
+- El origen del contacto (Instagram, WhatsApp, referido, etc.) sigue siendo independiente.
+- Cada cita del centro medico tiene honorario fijo de S/60.
+- El paciente paga al centro medico; Lisbeth recibe S/60 al culminar la atencion.
+- Al marcar la cita como Completada, la agenda la considera pagada automaticamente.
+- No se solicita registrar transferencias, liquidaciones, abonos ni referencias.
+- Las citas del centro no generan deuda del paciente con Lisbeth.
+- Los S/60 se incluyen en ingresos, caja, reportes y exportaciones desde la fecha de la cita.
+- Las citas programadas, canceladas o con inasistencia no generan ingresos.
+- Los pacientes particulares mantienen intactas sus tarifas, paquetes y pagos manuales.
+- No se requiere migracion de Firebase ni crear colecciones nuevas.
+
+PUBLICACION
+Subir el contenido del ZIP conservando la estructura de carpetas.
+Los pacientes existentes mantienen su procedencia guardada. Si un paciente pertenece
+al centro medico, editar su ficha y seleccionar Centro medico para las nuevas citas.

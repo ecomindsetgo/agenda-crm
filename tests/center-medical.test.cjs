@@ -15,13 +15,15 @@ test('La ficha separa procedencia asistencial del origen de captación',()=>{
  assert.match(app,/collectionMode:\s*isCenterOrigin \? 'centro_medico' : 'particular'/);
 });
 
-test('Las citas del centro no se registran como cobros al paciente y tienen liquidación auditada',()=>{
- const app=read('js/app.js'),platform=read('js/crm-platform.js'),core=read('js/crm-core.js');
- assert.match(app,/paymentStatus:\s*isCenterOrigin \? 'no_aplica'/);
- assert.match(app,/window\.registerCenterSettlement = async function/);
- assert.match(app,/settlementHistory:\s*\[\.\.\.history/);
- assert.match(app,/El paciente paga al centro médico/);
- assert.match(platform,/Liquidaciones del centro médico/);
- assert.match(platform,/data-center-settle/);
- assert.match(core,/const paid=a=>\{if\(isCenterMedical\(a\)\)return 0/);
+test('El centro médico paga S/60 automáticamente al completar la cita y no crea deuda al paciente',()=>{
+ const app=read('js/app.js'),platform=read('js/crm-platform.js'),core=read('js/crm-core.js'),ui=read('js/ui.js');
+ assert.match(app,/paymentStatus:\s*isCenterOrigin \? \(newStatus === 'completada' \? 'pagado' : 'no_aplica'\)/);
+ assert.match(app,/changes\.paymentStatus = newStatus === 'completada' \? 'pagado' : 'no_aplica'/);
+ assert.match(app,/changes\.paidAmount = newStatus === 'completada' \? window\.CRMCore\.cost\(original\) : 0/);
+ assert.match(core,/if\(isCenterMedical\(a\)\)return a\.status==='completada'\?cost\(a\):0/);
+ assert.match(core,/const remaining=a=>isCenterMedical\(a\)\|\|cancelled\(a\)\?0/);
+ assert.match(platform,/Ingresos recibidos/);
+ assert.doesNotMatch(platform,/Liquidaciones del centro médico|data-center-settle/);
+ assert.match(ui,/paga a Lisbeth al culminar la atención/);
+ assert.doesNotMatch(app,/registerCenterSettlement|settlementHistory|settlementPaid\(/);
 });
