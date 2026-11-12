@@ -9,7 +9,7 @@ Ubicación: Pacientes / CRM > Segmentación y seguimiento CRM.
 
 El archivo contiene todos los registros que coinciden con los filtros (no
 solo los que aparecen en la página actual). Incluye información administrativa:
-contacto, estado, origen/canal, citas, saldos por moneda y fechas principales.
+contacto, estado CRM, origen del contacto, procedencia de atención (Particular/Centro médico), canal, citas, saldos por moneda y fechas principales.
 NO incluye historias clínicas, observaciones, diagnósticos ni notas.
 
 Definición de "Activos": excluye los estados Pausado, Alta e Inactivo.
@@ -26,6 +26,8 @@ estructura de archivos. Los archivos nuevos son:
 Archivos modificados:
 - index.html
 - js/ui.js
+- js/patients-export-core.js
+- js/patients-export.js
 - sw.js (caché actualizado para la PWA)
 
 Pruebas automatizadas agregadas: tests/patients-export.test.cjs

@@ -1540,8 +1540,14 @@ Reglas estrictas:
                 document.getElementById('app-modality-presencial').checked = true;
                 document.getElementById('app-attention-individual').checked = true;
                 document.getElementById('app-rate-type').value = 'sesion';
+                document.getElementById('app-rate-type').disabled = false;
+                document.getElementById('app-cost').disabled = false;
                 document.getElementById('app-payment').disabled = false;
+                document.getElementById('app-payment').value = 'pendiente';
+                document.getElementById('app-payment-field')?.classList.remove('hidden');
+                document.getElementById('app-center-collection-note')?.classList.add('hidden');
                 document.getElementById('app-package-consumed').value = '';
+                window.syncAppointmentCareOriginFromPatient?.();
                 updateAppointmentPricing();
             }
             const m = document.getElementById('appointment-modal');
@@ -2214,7 +2220,8 @@ function appointmentForm(){
     <section class="v35-section">
       <div class="v35-section-title">${ico('calendar')} Datos de la cita</div>
       <div class="v35-grid-3">
-        <div class="v35-field full"><label>Paciente clínico *</label><div style="display:flex;gap:8px"><select id="app-patient-select" required onchange="autoSelectPatientPackage(); updateAppointmentPricing()" style="flex:1"></select><button type="button" onclick="switchToNewPatientFromAppoint()" class="v35-inline-new">${ico('plus')} Nuevo</button></div></div>
+        <div class="v35-field full"><label>Paciente clínico *</label><div style="display:flex;gap:8px"><select id="app-patient-select" required onchange="syncAppointmentCareOriginFromPatient(); autoSelectPatientPackage(); updateAppointmentPricing()" style="flex:1"></select><button type="button" onclick="switchToNewPatientFromAppoint()" class="v35-inline-new">${ico('plus')} Nuevo</button></div></div>
+        <div class="v35-field"><label>Procedencia *</label><select id="app-care-origin" onchange="updateAppointmentPricing()"><option value="particular">Particular</option><option value="centro_medico">Centro médico</option></select><span class="v35-help">Se propone según la ficha del paciente; puedes cambiarla para esta cita.</span></div>
         <div class="v35-field"><label>Fecha *</label><input type="date" id="app-date" required></div>
         <div class="v35-field"><label>Hora *</label><input type="time" id="app-time" required></div>
         <div class="v35-field"><label>Estado *</label><select id="app-status"><option value="pendiente">Pendiente</option><option value="completada">Completada</option><option value="no_asistio">No asistió</option><option value="cancelada">Cancelada</option></select></div>
@@ -2234,8 +2241,9 @@ function appointmentForm(){
       <div class="v35-grid-3">
         <div class="v35-field"><label>Tarifa *</label><select id="app-rate-type" onchange="updateAppointmentPricing()"><option value="sesion">Sesión individual</option><option value="paquete6">Paquete de 6 sesiones</option><option value="paquete8">Paquete de 8 sesiones</option></select></div>
         <div class="v35-field"><label id="app-cost-label">Precio (S/) *</label><input type="number" id="app-cost" min="0" step="0.50" value="50.00" required><span class="v35-help">Editable si necesitas ajustar la tarifa.</span></div>
-        <div class="v35-field"><label>Estado de pago *</label><select id="app-payment"><option value="pendiente">Pendiente de cobro</option><option value="parcial" disabled>Abono registrado</option><option value="pagado">Pagado</option></select></div>
+        <div class="v35-field" id="app-payment-field"><label>Estado de pago *</label><select id="app-payment"><option value="pendiente">Pendiente de cobro</option><option value="parcial" disabled>Abono registrado</option><option value="pagado">Pagado</option><option value="no_aplica">No aplica</option></select></div>
       </div>
+      <div id="app-center-collection-note" class="hidden" style="margin-top:12px;padding:12px;border:1px solid #bae6fd;background:#f0f9ff;color:#075985;border-radius:12px;font-size:12px;line-height:1.5"><strong>Pago mediante centro médico.</strong> El paciente paga directamente al centro. Se registra un honorario fijo de S/60 para Lisbeth; no se marca como cobrado. Cuando el centro transfiera el dinero, registra la liquidación en Finanzas → Liquidaciones del centro médico.</div>
       <div id="app-package-info" class="hidden" style="margin-top:12px"></div>
     </section>
 
@@ -2273,6 +2281,7 @@ function patientForm(){
         <div class="v35-field"><label>Origen del contacto</label><select id="pat-origen"><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="marketplace">Facebook Marketplace</option><option value="web">Página web</option><option value="whatsapp">WhatsApp directo</option><option value="calendly">Calendly</option><option value="google">Google</option><option value="referido">Referido</option><option value="otro" selected>Otro</option></select></div>
         <div class="v35-field"><label>Canal</label><select id="pat-canal"><option value="whatsapp" selected>WhatsApp</option><option value="llamada">Llamada telefónica</option><option value="presencial">Presencial</option><option value="email">Email</option><option value="otro">Otro</option></select></div>
         <div class="v35-field"><label>Estado CRM</label><select id="pat-lead-status"><option value="nuevo" selected>Nuevo</option><option value="contactado">Contactado</option><option value="interesado">Interesado</option><option value="cita_agendada">Cita agendada</option><option value="atendido">Atendido</option><option value="recurrente">En tratamiento</option><option value="seguimiento">Seguimiento</option><option value="pausado">Pausado</option><option value="alta">Alta terapéutica</option><option value="inactivo">Inactivo</option></select></div>
+        <div class="v35-field"><label>Procedencia de atención</label><select id="pat-care-origin"><option value="particular" selected>Particular · Consultorio propio</option><option value="centro_medico">Centro médico · Derivado</option></select><span class="v35-help">Determina cómo se registrará el pago de sus próximas citas.</span></div>
         <div class="v35-field"><label>Moneda</label><select id="pat-currency"><option value="PEN" selected>Soles (PEN)</option><option value="USD">Dólares (USD)</option></select></div>
       </div>
     </section>

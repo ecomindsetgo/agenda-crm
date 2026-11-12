@@ -1,0 +1,47 @@
+ACTUALIZACION: PROCEDENCIA DE ATENCION Y LIQUIDACIONES DEL CENTRO MEDICO
+
+OBJETIVO
+Separar los pacientes particulares de los pacientes derivados por el centro medico.
+El paciente paga directamente al centro; el centro liquida S/ 60 por sesion a Lisbeth.
+
+FICHA DEL PACIENTE
+- Nuevo campo: Procedencia de atencion.
+- Opciones: Particular / Centro medico.
+- El campo Origen del contacto (Instagram, WhatsApp, referido, etc.) se conserva
+  separado y no se reutiliza para identificar al centro medico.
+- La procedencia de la ficha se propone automaticamente al crear nuevas citas.
+
+CITAS
+- La procedencia puede ajustarse en cada cita sin cambiar la ficha del paciente.
+- Para Centro medico se asigna un honorario de S/ 60.
+- No se habilita el registro de pago al paciente ni se marca como cobrado.
+- Al completar la cita, el honorario pasa a la lista de liquidaciones pendientes.
+- Las citas particulares conservan sus tarifas, paquetes y pagos actuales.
+
+FINANZAS > LIQUIDACIONES DEL CENTRO MEDICO
+- Muestra honorarios devengados, importes ya liquidados y saldo por liquidar.
+- Permite registrar pagos completos o parciales.
+- Cada movimiento guarda importe, fecha, referencia y usuario que lo registro.
+- No permite registrar una liquidacion por encima del saldo pendiente.
+- Los importes del centro no se suman al dinero cobrado a pacientes particulares.
+
+PACIENTES Y EXCEL
+La ficha muestra una etiqueta Particular / Centro medico. La exportacion de pacientes
+incluye tambien la procedencia de atencion, sin incluir informacion clinica.
+
+IMPORTANTE PARA PACIENTES YA REGISTRADOS
+Los pacientes existentes aparecen como Particular hasta que se actualice su ficha.
+Al cambiar la procedencia en una ficha, el cambio se aplica a las nuevas citas.
+Las citas historicas conservan su procedencia original para no alterar registros
+financieros anteriores. Si una cita historica fue del centro medico, se puede editar
+esa cita y asignar Centro medico antes de revisar sus liquidaciones.
+
+PUBLICACION
+Subir el contenido del ZIP conservando la estructura de carpetas. No requiere
+migracion de colecciones ni cambios manuales en Firebase; los nuevos campos se
+almacenan en los documentos de pacientes y citas existentes.
+
+PRUEBAS
+27 pruebas automatizadas de logica, exportacion, pagos y regresiones superadas.
+Las pruebas DOM/navegador requieren las dependencias jsdom y playwright, que no
+estaban instaladas en el entorno de validacion.

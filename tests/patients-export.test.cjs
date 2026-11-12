@@ -5,7 +5,7 @@ const core=require('../js/patients-export-core.js');
 const people=[
  {id:'p1',name:'Ana Paz',phone:'099900011',dni:'00123456',birth:'1990-01-15',leadStatus:'recurrente',origen:'instagram',history:'DIAGNÓSTICO PRIVADO',currency:'PEN',createdAt:'2026-01-01'},
  {id:'p2',name:'Beto Sol',phone:'99888777',dni:'12345678',leadStatus:'inactivo'},
- {id:'p3',name:'Carla Luna',phone:'911122233',leadStatus:'seguimiento'},
+ {id:'p3',name:'Carla Luna',phone:'911122233',leadStatus:'seguimiento',careOrigin:'centro_medico'},
  {id:'p4',name:'Dora Mar',phone:'933332222',leadStatus:'alta'},
  {id:'p5',name:'Eva Paz',phone:'988811111',leadStatus:'pausado'},
  {id:'p6',name:'=SUM(1,1)',phone:'+51911111111',leadStatus:'nuevo'}
@@ -42,19 +42,20 @@ test('Filtros del CRM: activos excluye pausados, altas e inactivos y tratamiento
 test('Listado excluye bloqueos y notas, conserva texto del DNI, previene fórmulas y separa monedas',()=>{
  const r=core.buildReport(people,events,{filter:'todos',today:'2026-11-12'});
  assert.equal(r.total,6);
- assert.equal(r.headers.length,19);
+ assert.equal(r.headers.length,20);
  const ana=r.rows.find(row=>row[1]==='Ana Paz');
- assert.equal(ana[2],'00123456');assert.equal(ana[10],3);assert.equal(ana[11],1);assert.equal(ana[12],'2026-11-01');assert.equal(ana[13],'2026-11-13 15:00');
- assert.equal(ana[14],25);assert.equal(ana[15],90);
- assert.equal(r.rows.find(row=>row[18]==='p6')[1],"'=SUM(1,1)");
- assert.equal(r.rows.find(row=>row[18]==='p6')[3],"'+51911111111");
+ assert.equal(ana[2],'00123456');assert.equal(ana[8],'Particular');assert.equal(ana[11],3);assert.equal(ana[12],1);assert.equal(ana[13],'2026-11-01');assert.equal(ana[14],'2026-11-13 15:00');
+ assert.equal(ana[15],25);assert.equal(ana[16],90);
+ assert.equal(r.rows.find(row=>row[19]==='p6')[1],"'=SUM(1,1)");
+ assert.equal(r.rows.find(row=>row[19]==='p6')[3],"'+51911111111");
+ assert.equal(r.rows.find(row=>row[19]==='p3')[8],'Centro médico');
  assert(!JSON.stringify(r).includes('DIAGNÓSTICO PRIVADO'));
 });
 test('Excel exporta todo el filtro, conserva el encabezado y agrega autofiltro, sin paginación',()=>{
  const {w,calls}=sandbox('activos');w.downloadPatientsExcel();
  assert.equal(calls.length,1);assert.match(calls[0].name,/^Pacientes_CRM_activos_\d{4}-\d{2}-\d{2}\.xlsx$/);
  assert.equal(calls[0].wb.name,'Pacientes');assert.equal(calls[0].wb.ws['B6'].v,3);
- assert.equal(calls[0].wb.ws['!autofilter'].ref,'A8:S11');
+ assert.equal(calls[0].wb.ws['!autofilter'].ref,'A8:T11');
  assert.equal(calls[0].wb.ws['C10'].t,'s');
 });
 test('Exportar búsqueda del CRM aunque coincida con una única persona',()=>{
@@ -73,4 +74,5 @@ test('Interfaz mantiene filtros, botón y caché para nuevos módulos',()=>{
  assert.match(html,/js\/patients-export-core\.js/);assert.match(html,/js\/patients-export\.js/);
  assert.match(ui,/PatientExportCore\.matchesStatusFilter/);
  assert.match(sw,/js\/patients-export-core\.js/);assert.match(sw,/js\/patients-export\.js/);
+ assert.match(ui,/pat-care-origin/);assert.match(ui,/app-care-origin/);
 });

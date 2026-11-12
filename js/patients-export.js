@@ -14,9 +14,9 @@
     const x=window.XLSX;
     const rows=[['DIRECTORIO DE PACIENTES · CRM'],[],['Filtro',meta.filterLabel],['Búsqueda',meta.search||'Sin búsqueda'],['Generado (hora de Perú)',meta.generated],['Total de pacientes',report.total],[],report.headers,...report.rows];
     const ws=x.utils.aoa_to_sheet(rows);
-    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:18}}];
-    ws['!cols']=[8,35,17,19,16,13,22,23,18,12,17,19,23,24,23,24,20,20,27].map(wch=>({wch}));
-    ws['!autofilter']={ref:`A8:S${Math.max(8,8+report.total)}`};
+    ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:19}}];
+    ws['!cols']=[8,35,17,19,16,13,22,23,22,18,12,17,19,23,24,23,24,20,20,27].map(wch=>({wch}));
+    ws['!autofilter']={ref:`A8:T${Math.max(8,8+report.total)}`};
     ws['!rows']=[{hpt:30},{hpt:8},{hpt:20},{hpt:20},{hpt:20},{hpt:22},{hpt:8},{hpt:30}];
     const range=x.utils.decode_range(ws['!ref']);
     for(let r=0;r<=range.e.r;r++)for(let c=0;c<=range.e.c;c++){
@@ -24,9 +24,9 @@
       if(r===0){cell.s={font:{bold:true,sz:17,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'356B69'}}};}
       else if(r===7){cell.s={font:{bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'356B69'}},alignment:{wrapText:true,vertical:'center'}};}
       else if(r>=8&&r%2===0){cell.s={fill:{fgColor:{rgb:'EFF6F4'}}};}
-      if(r>=8&&c>=14&&c<=15&&cell.t==='n')cell.z='#,##0.00';
+      if(r>=8&&c>=15&&c<=16&&cell.t==='n')cell.z='#,##0.00';
       // DNI y teléfonos deben permanecer como texto, incluso con ceros iniciales.
-      if(r>=8&&[1,2,3,5,6,7,8,9,12,13,16,17,18].includes(c))cell.t='s';
+      if(r>=8&&[1,2,3,5,6,7,8,9,10,13,14,17,18,19].includes(c))cell.t='s';
     }
     const wb=x.utils.book_new();x.utils.book_append_sheet(wb,ws,'Pacientes');
     x.writeFile(wb,file,{compression:true});
