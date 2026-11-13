@@ -500,6 +500,39 @@ notify();
         }
 
         // ─── CRUD PACIENTES ───────────────────────────────────────────────────────
+        // ─── DETECCIÓN DE PACIENTES DUPLICADOS ──────────────────────────────────
+        // Compara contra los pacientes ya cargados (incluye archivados/inactivos).
+        function patientNameKey(value) {
+            return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().replace(/[^a-z0-9ñ ]/g, ' ').replace(/\s+/g, ' ').trim();
+        }
+        function patientNameTokensKey(value) {
+            // Ignora el orden: "Ruiz Medina Alejandra" = "Alejandra Ruiz Medina".
+            return patientNameKey(value).split(' ').filter(Boolean).sort().join(' ');
+        }
+        function patientDigits(value) { return String(value || '').replace(/\D/g, ''); }
+        function patientPhoneKey(value) {
+            const d = patientDigits(value);
+            return d.length >= 9 ? d.slice(-9) : d; // ignora prefijo +51
+        }
+        function findPatientDuplicates(candidate, excludeId) {
+            const dni = patientDigits(candidate.dni), phone = patientPhoneKey(candidate.phone);
+            const nameExact = patientNameKey(candidate.name), nameTokens = patientNameTokensKey(candidate.name);
+            const result = { dni: [], phone: [], name: [] };
+            (state.patients || []).forEach(p => {
+                if (String(p.id) === String(excludeId || '')) return;
+                if (dni && patientDigits(p.dni) === dni) result.dni.push(p);
+                if (phone && phone.length >= 7 && patientPhoneKey(p.phone) === phone) result.phone.push(p);
+                if (nameExact && (patientNameKey(p.name) === nameExact || patientNameTokensKey(p.name) === nameTokens)) result.name.push(p);
+            });
+            return result;
+        }
+        function describeDuplicatePatient(p) {
+            const archived = p.leadStatus === 'inactivo' ? ' [ARCHIVADO]' : '';
+            return `• ${p.name || 'Sin nombre'}${archived}${p.dni ? ' · DNI ' + p.dni : ''}${p.phone ? ' · Tel. ' + p.phone : ''}`;
+        }
+        window.findPatientDuplicates = findPatientDuplicates;
+
         document.getElementById('patient-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!state.currentUser) return;
@@ -518,6 +551,18 @@ notify();
                 currency:   document.getElementById('pat-currency') ? document.getElementById('pat-currency').value : 'PEN',
                 updatedAt: new Date().toISOString()
             };
+            // Alerta de duplicados (al crear o al editar, excluyendo a la misma ficha)
+            const dups = findPatientDuplicates(payload, document.getElementById('patient-id').value);
+            if (dups.dni.length) {
+                alert(`⚠️ DNI ya registrado\n\nEste DNI ya pertenece a:\n${dups.dni.map(describeDuplicatePatient).join('\n')}\n\nNo se puede guardar dos veces el mismo DNI. Busca a ese paciente en la lista y edítalo${dups.dni.some(p => p.leadStatus === 'inactivo') ? ' (está archivado: cambia su estado CRM para reactivarlo)' : ''}.`);
+                return;
+            }
+            const soft = [...new Map([...dups.name, ...dups.phone].map(p => [p.id, p])).values()];
+            if (soft.length) {
+                const why = [dups.name.length ? 'mismo nombre' : '', dups.phone.length ? 'mismo teléfono' : ''].filter(Boolean).join(' y ');
+                const proceed = confirm(`⚠️ Posible paciente duplicado (${why})\n\nYa existe:\n${soft.map(describeDuplicatePatient).join('\n')}\n\n¿Es otra persona y quieres guardarla de todos modos?\n\nAceptar = guardar igual · Cancelar = revisar`);
+                if (!proceed) return;
+            }
             const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
             await setDoc(ref, payload, { merge: true });
             closePatientModal();
@@ -531,6 +576,33 @@ notify();
                     leadStatus: 'inactivo', archivedAt: new Date().toISOString(), updatedBy: state.currentUser.uid
                 });
             } catch (error) { alert('No se pudo archivar el paciente: ' + error.message); }
+        };
+
+        // Eliminación DEFINITIVA. Solo si el paciente no tiene citas (la trazabilidad de
+        // cobros, paquetes y Google Calendar se conserva archivando). Borra también su
+        // historia clínica y notas clínicas.
+        window.removePatientPermanently = async function(pid) {
+            if (!state.currentUser) return;
+            const p = (state.patients || []).find(x => String(x.id) === String(pid));
+            if (!p) { alert('El paciente ya no está disponible.'); return; }
+            const apps = (state.appointments || []).filter(a => String(a.patientId) === String(pid));
+            if (apps.length) {
+                alert(`No se puede eliminar a "${p.name}" porque tiene ${apps.length} cita(s) registrada(s).\n\nPara conservar cobros, paquetes e historial, usa 📦 Archivar (queda inactivo y oculto del seguimiento).\n\nSi todas las citas fueron creadas por error, elimínalas primero desde la agenda y luego elimina al paciente.`);
+                return;
+            }
+            const notes = (state.notes || []).filter(n => String(n.patientId || n.pid || '') === String(pid));
+            const hasHistory = (state.histories || []).some(h => String(h.id) === String(pid));
+            const extra = (hasHistory || notes.length) ? `\n\nTambién se borrará su historia clínica${notes.length ? ' y ' + notes.length + ' nota(s) clínica(s)' : ''}.` : '';
+            if (!confirm(`¿Eliminar DEFINITIVAMENTE a "${p.name}"?${extra}\n\nEsta acción no se puede deshacer.`)) return;
+            if (prompt('Para confirmar, escribe ELIMINAR (en mayúsculas):') !== 'ELIMINAR') return;
+            try {
+                const root = ['artifacts', appId, 'users', state.currentUser.uid];
+                const batch = writeBatch(db);
+                batch.delete(doc(db, ...root, 'patients', String(pid)));
+                if (hasHistory) batch.delete(doc(db, ...root, 'clinicalHistories', String(pid)));
+                notes.forEach(n => batch.delete(doc(db, ...root, 'clinicalNotes', String(n.id))));
+                await batch.commit();
+            } catch (error) { alert('No se pudo eliminar el paciente: ' + (error.message || 'Error desconocido')); }
         };
 
         // V2: actualización CRM compatible con la colección actual de pacientes.
@@ -2638,7 +2710,8 @@ window.printClinicalHistory = async function() {
                         <button onclick="openPatientHistory('${p.id}')" class="text-graphite-600 text-xs font-semibold px-3 py-1.5 bg-graphite-50 hover:bg-graphite-100 rounded-lg border border-graphite-200 transition">📋 Historial</button>
                         <button onclick="openClinicalHistory('${p.id}')" class="text-sage-600 text-xs font-semibold px-3 py-1.5 bg-sage-50 hover:bg-sage-100 rounded-lg border border-sage-200">🩺 Historia Clínica</button>
                         <button onclick="editPatient('${p.id}')" class="text-sage-600 text-xs font-semibold px-3 py-1.5 hover:underline">✏️ Editar</button>
-                        <button onclick="deletePatient('${p.id}')" class="text-red-500 text-xs font-semibold px-3 py-1.5 hover:underline">🗑️ Eliminar</button>
+                        <button onclick="deletePatient('${p.id}')" class="text-graphite-500 text-xs font-semibold px-3 py-1.5 hover:underline">📦 Archivar</button>
+                        <button onclick="removePatientPermanently('${p.id}')" class="text-red-500 text-xs font-semibold px-3 py-1.5 hover:underline">🗑️ Eliminar</button>
                     </div>
                 </div>`).join('');
         };
