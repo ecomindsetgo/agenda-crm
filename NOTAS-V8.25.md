@@ -12,3 +12,5 @@ DUPLICADOS (al crear o editar un paciente)
 
 No cambia Firestore ni sus reglas (las reglas actuales ya permiten borrar pacientes, historias y notas).
 Publicar subiendo el ZIP con la misma estructura. Se subió la versión de caché a v8-25.
+
+AJUSTE (v8-26): la lista de Pacientes que se ve en pantalla es la tabla CRM (Paciente / Estado CRM / Última sesión / Próxima cita / Saldo). Se añadió el botón rojo 🗑️ Eliminar junto a "Ver 360". Para archivar, cambiar el Estado CRM a Inactivo.

@@ -26,4 +26,6 @@ assert.equal(none.dni.length+none.phone.length+none.name.length,0);
 assert(app.includes('window.removePatientPermanently'));
 assert(app.includes("removePatientPermanently('${p.id}')"));
 assert(app.includes('No se puede eliminar a'));
+const ui=fs.readFileSync(path.join(__dirname,'../js/ui.js'),'utf8');
+assert(ui.includes('window.removePatientPermanently(')); 
 console.log('PASS: duplicados por DNI/teléfono/nombre y eliminación definitiva.');
