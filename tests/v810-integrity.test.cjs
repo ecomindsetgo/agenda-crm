@@ -5,10 +5,10 @@ const core=fs.readFileSync(require('node:path').join(__dirname,'../js/crm-core.j
 const ui=fs.readFileSync(require('node:path').join(__dirname,'../js/ui.js'),'utf8');
 const exp=fs.readFileSync(require('node:path').join(__dirname,'../js/patients-export.js'),'utf8');
 assert(ui.includes('window.CRMCore.remaining(a),0'));assert(ui.includes("document.getElementById('p360-timeline').innerHTML=apps.map"));assert(app.includes("window.CRMCore.paymentState(a) === 'pagado'"));
-assert(core.includes("if(isCenterMedical(a))return completed(a)&&!cancelled(a)?cost(a):0"));
+assert(core.includes('const paid=a=>{const hasAmount'));
 assert(core.includes('withPatientCareOrigin'));
-assert(app.includes("paymentStatus:  isCenterOrigin ? (newStatus === 'completada' ? 'pagado' : 'no_aplica')"));
-assert(app.includes('window.registerCenterMedicalPayment = async function'));
+assert(app.includes("paymentStatus:  isCenterOrigin ? (existingAppt ? window.CRMCore.paymentState(resolveAppointmentCareOrigin(existingAppt)) : 'pendiente')"));
+assert(app.includes('window.registerCenterMedicalPayment = function(aid) { return window.quickTogglePayment(aid); }'));
 assert(app.includes("changes.collectionMode = 'centro_medico'"));
 assert(!app.includes('registerCenterSettlement'));assert(!app.includes('settlementPaid('));
-console.log('PASS: legacy paid, reversals, partial payments, center auto-paid on completion, cancelled and weekly report amounts.');
+console.log('PASS: legacy paid, reversals, partial payments, center payments registered manually, cancelled and weekly report amounts.');

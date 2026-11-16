@@ -1,21 +1,13 @@
-ACTUALIZACION: PAGO INMEDIATO DEL CENTRO MEDICO (MODELO SIMPLE)
+CENTRO MÉDICO · PAGOS REGISTRADOS COMO LAS CITAS PARTICULARES
 
-- Se conserva en la ficha del paciente el campo Procedencia: Particular / Centro medico.
-- El origen del contacto (Instagram, WhatsApp, referido, etc.) sigue siendo independiente.
-- Cada cita del centro medico tiene honorario fijo de S/60.
-- El paciente paga al centro medico; Lisbeth recibe S/60 al culminar la atencion.
-- Al marcar la cita como Completada, la agenda la considera pagada automaticamente.
-- Tambien existe el boton «Registrar S/60» en la cita: confirma la atencion y registra el pago en un solo paso.
-- No se solicita registrar transferencias, liquidaciones, abonos ni referencias.
-- Las citas del centro no generan deuda del paciente con Lisbeth.
-- Los S/60 se incluyen en ingresos, caja, reportes y exportaciones desde la fecha de la cita.
-- Las citas antiguas sin procedencia guardada pueden reconocerse usando la procedencia de la ficha del paciente, siempre que la cita no tenga una procedencia explicita.
-- Las citas programadas, canceladas o con inasistencia no generan ingresos.
-- Los pacientes particulares mantienen intactas sus tarifas, paquetes y pagos manuales.
-- Se reconocen estados «Completada» y «No asistio» aunque tengan mayusculas o tildes.
-- No se requiere migracion de Firebase ni crear colecciones nuevas.
-
-PUBLICACION
-Subir el contenido del ZIP conservando la estructura de carpetas.
-Los pacientes existentes mantienen su procedencia guardada. Si un paciente pertenece
-al centro medico, editar su ficha y seleccionar Centro medico para las nuevas citas.
+- Cada cita del centro médico tiene una tarifa fija de S/60 en soles.
+- En Agenda, el botón “Agregar pago” usa el mismo flujo de las citas particulares.
+- Se puede registrar un pago total o parcial; cada movimiento queda en paymentHistory con fecha, medio y usuario.
+- Completar una cita no crea un pago automáticamente. El pago se registra desde el botón de la cita.
+- Finanzas suma las citas vigentes del centro médico al monto facturado, junto con las particulares.
+- Los pagos del centro médico se suman a cobrado únicamente cuando se registran.
+- Los saldos del centro médico se incluyen en el resumen global, pero no se presentan como deuda del paciente en la relación de cuentas por cobrar.
+- Cancelaciones e inasistencias no generan facturación del centro; si existió un pago previo, se conserva su historial.
+- Se reconoce el origen centro médico desde la ficha del paciente en citas antiguas sin procedencia guardada.
+- Las citas particulares, tarifas, paquetes, historias clínicas y datos existentes se conservan.
+- No requiere migración ni cambios en Firebase/Firestore Rules.
