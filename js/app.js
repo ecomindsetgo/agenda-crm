@@ -99,6 +99,18 @@ if (app) {
 
         window._profileState = state;
 
+        // Resuelve citas antiguas que no guardaron procedencia usando la ficha del paciente.
+        // Una procedencia explícita en la cita siempre tiene prioridad sobre la ficha.
+        function resolveAppointmentCareOrigin(appointment) {
+            if (!appointment) return appointment;
+            const patient = state.patients.find(p => String(p.id) === String(appointment.patientId));
+            return window.CRMCore.withPatientCareOrigin(appointment, patient);
+        }
+        function isCenterMedicalAppointment(appointment) {
+            return window.CRMCore.isCenterMedical(resolveAppointmentCareOrigin(appointment));
+        }
+        window.isCenterMedicalAppointment = isCenterMedicalAppointment;
+
         // Puente seguro para el asistente IA: únicamente datos administrativos.
         // No expone historias clínicas, notas, diagnósticos ni motivos de consulta.
         window.getAgendaAdminSnapshot = function () {
@@ -106,20 +118,23 @@ if (app) {
             const byId = {};
             patients.forEach(p => { if (p && p.id) byId[p.id] = p.name || ''; });
             return {
-                appointments: (state.appointments || []).map(a => ({
+                appointments: (state.appointments || []).map(raw => {
+                    const a = resolveAppointmentCareOrigin(raw);
+                    return {
                     id: a.id,
                     date: a.date || '',
                     time: a.time || '',
                     patientName: a.patientName || byId[a.patientId] || 'Paciente',
                     status: a.status || 'pendiente',
-                    cost: Number(a.cost || 0),
-                    currency: a.currency === 'USD' ? 'USD' : 'PEN',
+                    cost: window.CRMCore.cost(a),
+                    currency: window.CRMCore.currency(a),
                     paymentStatus: window.CRMCore.paymentState(a),
-                    careOrigin: window.CRMCore.isCenterMedical(a) ? 'centro_medico' : 'particular',
+                    careOrigin: isCenterMedicalAppointment(a) ? 'centro_medico' : 'particular',
                     paymentState: window.CRMCore.paymentState(a),
                     paidAmount: window.CRMCore.paid(a),
                     modality: a.modality || ''
-                })),
+                    };
+                }),
                 patients: patients.map(p => ({ id: p.id, name: p.name || '', careOrigin: p.careOrigin === 'centro_medico' ? 'centro_medico' : 'particular' }))
             };
         };
@@ -500,39 +515,6 @@ notify();
         }
 
         // ─── CRUD PACIENTES ───────────────────────────────────────────────────────
-        // ─── DETECCIÓN DE PACIENTES DUPLICADOS ──────────────────────────────────
-        // Compara contra los pacientes ya cargados (incluye archivados/inactivos).
-        function patientNameKey(value) {
-            return String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase().replace(/[^a-z0-9ñ ]/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-        function patientNameTokensKey(value) {
-            // Ignora el orden: "Ruiz Medina Alejandra" = "Alejandra Ruiz Medina".
-            return patientNameKey(value).split(' ').filter(Boolean).sort().join(' ');
-        }
-        function patientDigits(value) { return String(value || '').replace(/\D/g, ''); }
-        function patientPhoneKey(value) {
-            const d = patientDigits(value);
-            return d.length >= 9 ? d.slice(-9) : d; // ignora prefijo +51
-        }
-        function findPatientDuplicates(candidate, excludeId) {
-            const dni = patientDigits(candidate.dni), phone = patientPhoneKey(candidate.phone);
-            const nameExact = patientNameKey(candidate.name), nameTokens = patientNameTokensKey(candidate.name);
-            const result = { dni: [], phone: [], name: [] };
-            (state.patients || []).forEach(p => {
-                if (String(p.id) === String(excludeId || '')) return;
-                if (dni && patientDigits(p.dni) === dni) result.dni.push(p);
-                if (phone && phone.length >= 7 && patientPhoneKey(p.phone) === phone) result.phone.push(p);
-                if (nameExact && (patientNameKey(p.name) === nameExact || patientNameTokensKey(p.name) === nameTokens)) result.name.push(p);
-            });
-            return result;
-        }
-        function describeDuplicatePatient(p) {
-            const archived = p.leadStatus === 'inactivo' ? ' [ARCHIVADO]' : '';
-            return `• ${p.name || 'Sin nombre'}${archived}${p.dni ? ' · DNI ' + p.dni : ''}${p.phone ? ' · Tel. ' + p.phone : ''}`;
-        }
-        window.findPatientDuplicates = findPatientDuplicates;
-
         document.getElementById('patient-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!state.currentUser) return;
@@ -551,18 +533,6 @@ notify();
                 currency:   document.getElementById('pat-currency') ? document.getElementById('pat-currency').value : 'PEN',
                 updatedAt: new Date().toISOString()
             };
-            // Alerta de duplicados (al crear o al editar, excluyendo a la misma ficha)
-            const dups = findPatientDuplicates(payload, document.getElementById('patient-id').value);
-            if (dups.dni.length) {
-                alert(`⚠️ DNI ya registrado\n\nEste DNI ya pertenece a:\n${dups.dni.map(describeDuplicatePatient).join('\n')}\n\nNo se puede guardar dos veces el mismo DNI. Busca a ese paciente en la lista y edítalo${dups.dni.some(p => p.leadStatus === 'inactivo') ? ' (está archivado: cambia su estado CRM para reactivarlo)' : ''}.`);
-                return;
-            }
-            const soft = [...new Map([...dups.name, ...dups.phone].map(p => [p.id, p])).values()];
-            if (soft.length) {
-                const why = [dups.name.length ? 'mismo nombre' : '', dups.phone.length ? 'mismo teléfono' : ''].filter(Boolean).join(' y ');
-                const proceed = confirm(`⚠️ Posible paciente duplicado (${why})\n\nYa existe:\n${soft.map(describeDuplicatePatient).join('\n')}\n\n¿Es otra persona y quieres guardarla de todos modos?\n\nAceptar = guardar igual · Cancelar = revisar`);
-                if (!proceed) return;
-            }
             const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
             await setDoc(ref, payload, { merge: true });
             closePatientModal();
@@ -576,33 +546,6 @@ notify();
                     leadStatus: 'inactivo', archivedAt: new Date().toISOString(), updatedBy: state.currentUser.uid
                 });
             } catch (error) { alert('No se pudo archivar el paciente: ' + error.message); }
-        };
-
-        // Eliminación DEFINITIVA. Solo si el paciente no tiene citas (la trazabilidad de
-        // cobros, paquetes y Google Calendar se conserva archivando). Borra también su
-        // historia clínica y notas clínicas.
-        window.removePatientPermanently = async function(pid) {
-            if (!state.currentUser) return;
-            const p = (state.patients || []).find(x => String(x.id) === String(pid));
-            if (!p) { alert('El paciente ya no está disponible.'); return; }
-            const apps = (state.appointments || []).filter(a => String(a.patientId) === String(pid));
-            if (apps.length) {
-                alert(`No se puede eliminar a "${p.name}" porque tiene ${apps.length} cita(s) registrada(s).\n\nPara conservar cobros, paquetes e historial, usa 📦 Archivar (queda inactivo y oculto del seguimiento).\n\nSi todas las citas fueron creadas por error, elimínalas primero desde la agenda y luego elimina al paciente.`);
-                return;
-            }
-            const notes = (state.notes || []).filter(n => String(n.patientId || n.pid || '') === String(pid));
-            const hasHistory = (state.histories || []).some(h => String(h.id) === String(pid));
-            const extra = (hasHistory || notes.length) ? `\n\nTambién se borrará su historia clínica${notes.length ? ' y ' + notes.length + ' nota(s) clínica(s)' : ''}.` : '';
-            if (!confirm(`¿Eliminar DEFINITIVAMENTE a "${p.name}"?${extra}\n\nEsta acción no se puede deshacer.`)) return;
-            if (prompt('Para confirmar, escribe ELIMINAR (en mayúsculas):') !== 'ELIMINAR') return;
-            try {
-                const root = ['artifacts', appId, 'users', state.currentUser.uid];
-                const batch = writeBatch(db);
-                batch.delete(doc(db, ...root, 'patients', String(pid)));
-                if (hasHistory) batch.delete(doc(db, ...root, 'clinicalHistories', String(pid)));
-                notes.forEach(n => batch.delete(doc(db, ...root, 'clinicalNotes', String(n.id))));
-                await batch.commit();
-            } catch (error) { alert('No se pudo eliminar el paciente: ' + (error.message || 'Error desconocido')); }
         };
 
         // V2: actualización CRM compatible con la colección actual de pacientes.
@@ -833,13 +776,13 @@ window.callConsultorioFunction ||= async function(name,data={}){
 window.registerAppointmentPayment = async function(aid,data){
     if(!state.currentUser)throw new Error('Inicia sesión.');
     const currentAppointment = state.appointments.find(x => x.id === aid);
-    if (currentAppointment && window.CRMCore.isCenterMedical(currentAppointment)) throw new Error('El centro médico paga S/60 a Lisbeth al culminar la atención. Marca la cita como completada para registrarlo automáticamente.');
+    if (currentAppointment && isCenterMedicalAppointment(currentAppointment)) throw new Error('El centro médico paga S/60 a Lisbeth al culminar la atención. Marca la cita como completada para registrarlo automáticamente.');
     const amount=Math.round(Number(data.amount)*100),date=data.date||window.CRMCore.dateKey(),method=String(data.method||'Otro').slice(0,80),operationId=data.operationId||crypto.randomUUID();
     if(!Number.isFinite(amount)||amount<=0||!/^\d{4}-\d{2}-\d{2}$/.test(date)||!Number.isFinite(Date.parse(date+'T12:00:00Z'))||new Date(date+'T12:00:00Z').toISOString().slice(0,10)!==date)throw new Error('Indica un importe positivo y una fecha válida.');
     const ref=doc(db,'artifacts',appId,'users',state.currentUser.uid,'appointments',aid);
     await runTransaction(db,async transaction=>{
         const snap=await transaction.get(ref);if(!snap.exists())throw new Error('Cita no encontrada.');const a=snap.data();
-        if(window.CRMCore.isCenterMedical(a))throw new Error('Esta cita se paga mediante el centro médico. Al marcarla como completada, los S/60 se registran automáticamente como recibidos.');
+        if(isCenterMedicalAppointment(a))throw new Error('Esta cita se paga mediante el centro médico. Al marcarla como completada, los S/60 se registran automáticamente como recibidos.');
         if(['cancelada','no_asistio'].includes(a.status)||a.isManualBlock)throw new Error('Selecciona una cita activa para registrar un pago.');
         const events=Array.isArray(a.paymentHistory)?a.paymentHistory:[];if(events.some(e=>e.id===operationId))return;
         const cost=Math.round(window.CRMCore.cost(a)*100),paid=Math.round(window.CRMCore.paid(a)*100);if(cost<=0||amount>cost-paid)throw new Error('El abono supera el saldo pendiente.');
@@ -851,7 +794,7 @@ window.registerAppointmentPayment = async function(aid,data){
 window.reverseAppointmentPayment = async function(aid){
     if(!state.currentUser) { alert('Inicia sesión.'); return; }
     const a=state.appointments.find(x=>x.id===aid);
-    if (a && window.CRMCore.isCenterMedical(a)) { alert('El pago del centro médico se registra automáticamente al completar la atención; no se cobra al paciente desde la agenda.'); return; }
+    if (a && isCenterMedicalAppointment(a)) { alert('El pago del centro médico se registra automáticamente al completar la atención; no se cobra al paciente desde la agenda.'); return; }
     if(!a) { alert('Cita no encontrada.'); return; }
     const current=window.CRMCore.paid(a);
     if(current<=0) { alert('Esta cita no registra cobros por revertir.'); return; }
@@ -870,7 +813,7 @@ window.reverseAppointmentPayment = async function(aid){
             const snap=await tx.get(ref);
             if(!snap.exists())throw new Error('La cita ya no existe.');
             const fresh=snap.data();
-            if(window.CRMCore.isCenterMedical(fresh))throw new Error('El centro médico paga S/60 al culminar la atención; no se registra un cobro al paciente.');
+            if(isCenterMedicalAppointment(fresh))throw new Error('El centro médico paga S/60 al culminar la atención; no se registra un cobro al paciente.');
             const before=Math.round(window.CRMCore.paid(fresh)*100);
             if(amount>before)throw new Error('El cobro cambió en otro dispositivo; vuelve a intentar.');
             const now=new Date().toISOString();
@@ -1210,7 +1153,9 @@ window.printClinicalHistory = async function() {
         }
 
         function computeFinanceMetrics(apps) {
-            return window.CRMCore.metrics(apps);
+            const source = Array.isArray(apps) ? apps : [];
+            const resolved = source.map(resolveAppointmentCareOrigin);
+            return window.CRMCore.metrics(resolved);
         }
         window.computeFinanceMetrics = computeFinanceMetrics;
 
@@ -1485,7 +1430,7 @@ window.printClinicalHistory = async function() {
             const editingId = document.getElementById('app-id')?.value;
             const editingAppointment = editingId ? state.appointments.find(a => a.id === editingId) : null;
             if (editingAppointment) {
-                const savedAsCenter = window.CRMCore.isCenterMedical(editingAppointment);
+                const savedAsCenter = isCenterMedicalAppointment(editingAppointment);
                 const selectedAsCenter = careOrigin === 'centro_medico';
                 const hasPrivatePayments = !savedAsCenter && (window.CRMCore.paid(editingAppointment) > 0 || (Array.isArray(editingAppointment.paymentHistory) && editingAppointment.paymentHistory.some(event => Number(event.amount) > 0)));
                 const hasCenterPayment = savedAsCenter && window.CRMCore.paid(editingAppointment) > 0;
@@ -2067,7 +2012,7 @@ window.printClinicalHistory = async function() {
             const existingAppt = state.appointments.find(a => a.id === aid);
             const oldStatus = existingAppt ? existingAppt.status : null;
             if (existingAppt) {
-                const wasCenter = window.CRMCore.isCenterMedical(existingAppt);
+                const wasCenter = isCenterMedicalAppointment(existingAppt);
                 const willBeCenter = careOrigin === 'centro_medico';
                 const hasPrivatePayments = !wasCenter && (window.CRMCore.paid(existingAppt) > 0 || (Array.isArray(existingAppt.paymentHistory) && existingAppt.paymentHistory.some(event => Number(event.amount) > 0)));
                 const hasCenterPayment = wasCenter && window.CRMCore.paid(existingAppt) > 0;
@@ -2253,11 +2198,15 @@ window.printClinicalHistory = async function() {
                     const at = new Date().toISOString();
                     const changes = {status:newStatus,statusUpdatedAt:at,updatedAt:at,updatedBy:state.currentUser.uid,
                         statusHistory:[...history,{id:crypto.randomUUID(),from:oldStatus,to:newStatus,at,by:state.currentUser.uid}]};
-                    if (window.CRMCore.isCenterMedical(original)) {
+                    if (isCenterMedicalAppointment(original)) {
+                        changes.careOrigin = 'centro_medico';
+                        changes.collectionMode = 'centro_medico';
+                        changes.cost = 60;
+                        changes.currency = 'PEN';
                         changes.paymentStatus = newStatus === 'completada' ? 'pagado' : 'no_aplica';
-                        changes.paidAmount = newStatus === 'completada' ? window.CRMCore.cost(original) : 0;
+                        changes.paidAmount = newStatus === 'completada' ? 60 : 0;
                         changes.paymentMethod = newStatus === 'completada' ? 'Pago inmediato del centro médico' : '';
-                        changes.paymentDate = newStatus === 'completada' ? (original.paymentDate || original.date || window.CRMCore.dateKey()) : '';
+                        changes.paymentDate = newStatus === 'completada' ? window.CRMCore.dateKey() : '';
                     }
                     tx.update(ref, changes);
                 });
@@ -2270,11 +2219,49 @@ window.printClinicalHistory = async function() {
             }
         };
 
+        // Registro simple del honorario del centro médico: completa la cita y registra S/60 juntos.
+        window.registerCenterMedicalPayment = async function(aid) {
+            if (!state.currentUser) throw new Error('Inicia sesión.');
+            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'appointments', aid);
+            const current = state.appointments.find(x => x.id === aid);
+            if (!current) throw new Error('Cita no encontrada.');
+            if (!isCenterMedicalAppointment(current)) throw new Error('Esta cita no pertenece al centro médico.');
+            if (window.CRMCore.cancelled(current)) throw new Error('La cita está cancelada o marcada como inasistencia.');
+            if (window.CRMCore.paymentState(resolveAppointmentCareOrigin(current)) === 'pagado') {
+                alert('Los S/60 de esta atención ya figuran como recibidos.');
+                return;
+            }
+            if (!confirm('¿Confirmas que la atención culminó y Lisbeth recibió S/60 del centro médico? La cita quedará como completada y pagada.')) return;
+            await runTransaction(db, async tx => {
+                const snap = await tx.get(ref);
+                if (!snap.exists()) throw new Error('Cita no encontrada.');
+                const original = snap.data();
+                if (!isCenterMedicalAppointment({...original, id: aid})) throw new Error('La cita ya no figura como atención del centro médico.');
+                if (window.CRMCore.cancelled(original)) throw new Error('La cita está cancelada o marcada como inasistencia.');
+                const at = new Date().toISOString();
+                const oldStatus = window.CRMCore.normalizeStatus(original.status);
+                const history = Array.isArray(original.statusHistory) ? original.statusHistory : [];
+                const changes = {
+                    careOrigin: 'centro_medico', collectionMode: 'centro_medico',
+                    cost: 60, currency: 'PEN', status: 'completada',
+                    paymentStatus: 'pagado', paidAmount: 60,
+                    paymentMethod: 'Pago inmediato del centro médico',
+                    paymentDate: window.CRMCore.dateKey(), paymentUpdatedAt: at,
+                    updatedAt: at, updatedBy: state.currentUser.uid
+                };
+                if (oldStatus !== 'completada') {
+                    changes.statusUpdatedAt = at;
+                    changes.statusHistory = [...history, {id: crypto.randomUUID(), from: original.status || 'pendiente', to: 'completada', at, by: state.currentUser.uid}];
+                }
+                tx.update(ref, changes);
+            });
+        };
+
         // Cobro con historial e idempotencia; nunca borrar cobros con un toggle.
         window.quickTogglePayment = async function(aid) {
             const a = state.appointments.find(x => x.id === aid);
             if (!a || !state.currentUser) return;
-            if (window.CRMCore.isCenterMedical(a)) { alert('El centro médico paga S/60 a Lisbeth al culminar la atención. Marca la cita como completada para registrarlo automáticamente.'); return; }
+            if (isCenterMedicalAppointment(a)) return window.registerCenterMedicalPayment(aid);
             if (['cancelada','no_asistio'].includes(a.status)) { alert('La cita no está activa.'); return; }
             const remaining = window.CRMCore.remaining(a);
             if (remaining <= 0) { alert('Esta cita no tiene saldo pendiente. Para corregir un cobro, utiliza un procedimiento de reversión auditado; no se borrarán pagos existentes.'); return; }
@@ -2312,7 +2299,7 @@ window.printClinicalHistory = async function() {
             document.getElementById('app-package-consumed').value     = a.packageConsumed ? '1' : '';
             document.getElementById('app-rate-type').value            = a.rateType || 'sesion';
             const appCareOriginEl = document.getElementById('app-care-origin');
-            const isCenterAppointment = window.CRMCore.isCenterMedical(a);
+            const isCenterAppointment = isCenterMedicalAppointment(a);
             if (appCareOriginEl) appCareOriginEl.value = isCenterAppointment ? 'centro_medico' : 'particular';
             if (!isCenterAppointment) {
                 document.getElementById('app-rate-type').disabled = false;
@@ -2335,8 +2322,8 @@ window.printClinicalHistory = async function() {
             setTimeout(() => {
                 document.getElementById('app-patient-select').value = a.patientId;
                 const originSelect = document.getElementById('app-care-origin');
-                if (originSelect) originSelect.value = window.CRMCore.isCenterMedical(a) ? 'centro_medico' : 'particular';
-                if (window.CRMCore.isCenterMedical(a)) window.updateAppointmentPricing();
+                if (originSelect) originSelect.value = isCenterMedicalAppointment(a) ? 'centro_medico' : 'particular';
+                if (isCenterMedicalAppointment(a)) window.updateAppointmentPricing();
                 const modalityValue = a.modality === 'virtual' ? 'app-modality-virtual' : 'app-modality-presencial';
                 const modalityRadio = document.getElementById(modalityValue);
                 if (modalityRadio) modalityRadio.checked = true;
@@ -2381,7 +2368,7 @@ window.printClinicalHistory = async function() {
             const dateFilter = document.getElementById('date-filter').value;
             const searchVal  = document.getElementById('appointment-search').value.toLowerCase().trim();
 
-            let filtered = state.appointments.filter(a => a.date === dateFilter);
+            let filtered = state.appointments.filter(a => a.date === dateFilter).map(resolveAppointmentCareOrigin);
             if (state.filterStatus !== 'todas') filtered = filtered.filter(a => a.status === state.filterStatus);
             if (searchVal) filtered = filtered.filter(a =>
                 String(a.patientName || '').toLowerCase().includes(searchVal) ||
@@ -2405,12 +2392,14 @@ window.printClinicalHistory = async function() {
                 };
                 const badge = statusClassMap[a.status] || statusClassMap.pendiente;
                 const statusTextMap = { pendiente:'AGENDADA', confirmada:'CONFIRMADA', arrived:'LLEGÓ', in_session:'EN SESIÓN', completada:'COMPLETADA', no_asistio:'NO ASISTIÓ', cancelada:'CANCELADA' };
-                const centerMedical = window.CRMCore.isCenterMedical(a);
+                const centerMedical = isCenterMedicalAppointment(a);
+                const centerPaid = window.CRMCore.paymentState(resolveAppointmentCareOrigin(a)) === 'pagado';
+                const centerCancelled = centerMedical && window.CRMCore.cancelled(a);
                 const payBadgeCls = centerMedical
-                    ? (window.CRMCore.paymentState(a) === 'pagado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-sky-700 border-sky-200')
+                    ? (centerPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-sky-50 text-sky-700 border-sky-200')
                     : (window.CRMCore.paymentState(a) === 'pagado' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200');
                 const payBadgeLbl = centerMedical
-                    ? (a.status === 'completada' ? 'Centro médico · Pagado' : 'Centro médico · S/60 al completar')
+                    ? (centerPaid ? 'Centro médico · Pagado' : 'Centro médico · S/60 al completar')
                     : (window.CRMCore.paymentState(a) === 'pagado' ? '💳 Pagado' : '⏳ Pendiente');
                 // Mismo patrón de color que el botón de estado de pago:
                 // completada = verde, pendiente = ámbar, cancelada = rojo.
@@ -2459,7 +2448,7 @@ window.printClinicalHistory = async function() {
                                     <option value="cancelada" ${a.status === 'cancelada' ? 'selected' : ''}>Cancelada</option>
                                 </select>
                             </label>
-                            ${centerMedical ? `<span class="v31-payment-btn ${payBadgeCls}" title="El centro médico paga S/60 al culminar la atención">S/ 60 · ${a.status === 'completada' ? 'Pagado' : 'Al completar'}</span>` : `<button onclick="quickTogglePayment('${a.id}')" class="v31-payment-btn ${payBadgeCls}"><svg class="v2-icon"><use href="#i-money"></use></svg><span>${window.CRMCore.paymentState(a) === 'pagado' ? 'Pagado' : window.CRMCore.paymentState(a)==='parcial'?'Abono registrado':'Registrar pago'}</span></button>`}
+                            ${centerMedical ? (centerCancelled ? `<span class="v31-payment-btn ${payBadgeCls}" title="Las citas canceladas o con inasistencia no generan honorario">Sin cobro</span>` : centerPaid ? `<span class="v31-payment-btn ${payBadgeCls}" title="Honorario del centro médico recibido">S/ 60 · Pagado</span>` : `<button onclick="quickTogglePayment('${a.id}')" class="v31-payment-btn ${payBadgeCls}" title="Registrar el honorario recibido al culminar la atención"><svg class="v2-icon"><use href="#i-money"></use></svg><span>Registrar S/60</span></button>`) : `<button onclick="quickTogglePayment('${a.id}')" class="v31-payment-btn ${payBadgeCls}"><svg class="v2-icon"><use href="#i-money"></use></svg><span>${window.CRMCore.paymentState(a) === 'pagado' ? 'Pagado' : window.CRMCore.paymentState(a)==='parcial'?'Abono registrado':'Registrar pago'}</span></button>`}
                         </div>
                     </div>
                 </article>`;
@@ -2710,8 +2699,7 @@ window.printClinicalHistory = async function() {
                         <button onclick="openPatientHistory('${p.id}')" class="text-graphite-600 text-xs font-semibold px-3 py-1.5 bg-graphite-50 hover:bg-graphite-100 rounded-lg border border-graphite-200 transition">📋 Historial</button>
                         <button onclick="openClinicalHistory('${p.id}')" class="text-sage-600 text-xs font-semibold px-3 py-1.5 bg-sage-50 hover:bg-sage-100 rounded-lg border border-sage-200">🩺 Historia Clínica</button>
                         <button onclick="editPatient('${p.id}')" class="text-sage-600 text-xs font-semibold px-3 py-1.5 hover:underline">✏️ Editar</button>
-                        <button onclick="deletePatient('${p.id}')" class="text-graphite-500 text-xs font-semibold px-3 py-1.5 hover:underline">📦 Archivar</button>
-                        <button onclick="removePatientPermanently('${p.id}')" class="text-red-500 text-xs font-semibold px-3 py-1.5 hover:underline">🗑️ Eliminar</button>
+                        <button onclick="deletePatient('${p.id}')" class="text-red-500 text-xs font-semibold px-3 py-1.5 hover:underline">🗑️ Eliminar</button>
                     </div>
                 </div>`).join('');
         };
@@ -2738,19 +2726,22 @@ window.printClinicalHistory = async function() {
 
         function getFinanceAppointments() {
             const financeRef = state.financeReferenceDate || todayStr;
+            let list;
             if (state.financePeriod === 'dia') {
-                return state.appointments.filter(a => a.date === financeRef);
+                list = state.appointments.filter(a => a.date === financeRef);
             } else if (state.financePeriod === 'semana') {
                 const [lunes, domingo] = getWeekRangeStr(financeRef);
-                return state.appointments.filter(a => a.date >= lunes && a.date <= domingo);
+                list = state.appointments.filter(a => a.date >= lunes && a.date <= domingo);
             } else if (state.financePeriod === 'mes') {
                 const [inicio, fin] = periodRangeStr('mes', financeRef);
-                return state.appointments.filter(a => a.date >= inicio && a.date <= fin);
+                list = state.appointments.filter(a => a.date >= inicio && a.date <= fin);
             } else if (state.financePeriod === 'personalizado') {
                 const [inicio, fin] = periodRangeStr('personalizado', todayStr);
-                return state.appointments.filter(a => a.date >= inicio && a.date <= fin);
+                list = state.appointments.filter(a => a.date >= inicio && a.date <= fin);
+            } else {
+                list = state.appointments;
             }
-            return state.appointments;
+            return list.map(resolveAppointmentCareOrigin);
         }
 
         function formatDateRangeLabel(start, end) {
@@ -3274,7 +3265,7 @@ window.printClinicalHistory = async function() {
                 byOrigen[key].leads += 1;
             });
 
-            financeApps.filter(a => !window.CRMCore.isCenterMedical(a)).forEach(a => {
+            financeApps.filter(a => !isCenterMedicalAppointment(a)).forEach(a => {
                 const patient = state.patients.find(p => p.id === a.patientId);
                 const key = patient && ORIGEN_LABELS[patient.origen] ? patient.origen : 'otro';
                 byOrigen[key].citas += 1;
@@ -3492,10 +3483,16 @@ window.printClinicalHistory = async function() {
                 ['DETALLE DE CITAS'],
                 ['ITEM','PACIENTE','MODALIDAD','FECHA','HORA','ESTADO','PAGO','MONEDA','IMPORTE','OBSERVACIÓN']
             ];
-            apps.forEach((a,i)=>rows.push([
-                i+1, a.patientName||'Paciente', a.modality==='virtual'?'VIRTUAL':'PRESENCIAL', a.date||'', (a.time||'').slice(0,5),
-                String(a.status||'').toUpperCase(), window.CRMCore.isCenterMedical(a) ? (window.CRMCore.paymentState(a)==='pagado'?'CENTRO MÉDICO · PAGADO':'CENTRO MÉDICO · AL COMPLETAR') : (a.paymentStatus==='pagado'?'PAGADO':'PENDIENTE'), a.currency==='USD'?'USD':'PEN', Number(a.cost||0), window.CRMCore.isCenterMedical(a) ? 'El centro paga S/60 a Lisbeth al culminar la atención' : (a.notes||'')
-            ]));
+            apps.forEach((raw,i)=>{
+                const a = resolveAppointmentCareOrigin(raw);
+                const center = window.CRMCore.isCenterMedical(a);
+                const paid = window.CRMCore.paymentState(a) === 'pagado';
+                rows.push([
+                    i+1, a.patientName||'Paciente', a.modality==='virtual'?'VIRTUAL':'PRESENCIAL', a.date||'', (a.time||'').slice(0,5),
+                    String(a.status||'').toUpperCase(), center ? (paid?'CENTRO MÉDICO · PAGADO':'CENTRO MÉDICO · AL COMPLETAR') : (a.paymentStatus==='pagado'?'PAGADO':'PENDIENTE'),
+                    window.CRMCore.currency(a), window.CRMCore.cost(a), center ? 'El centro paga S/60 a Lisbeth al culminar la atención' : (a.notes||'')
+                ]);
+            });
             const ws=XLSX.utils.aoa_to_sheet(rows);
             ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}}];
             ws['!cols']=[{wch:8},{wch:28},{wch:15},{wch:14},{wch:10},{wch:16},{wch:14},{wch:10},{wch:13},{wch:35}];
@@ -3785,7 +3782,7 @@ window.printClinicalHistory = async function() {
                             <span class="text-xs font-semibold text-graphite-600 bg-graphite-200 px-2 py-0.5 rounded-lg">${a.time}</span>
                             <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${badge}">${a.status.toUpperCase()}</span>
                             ${modalityBadge}
-                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${payBadge}">${window.CRMCore.isCenterMedical(a) ? (window.CRMCore.paymentState(a) === 'pagado' ? 'Centro médico · Pagado' : 'Centro médico · S/60 al completar') : (window.CRMCore.paymentState(a) === 'pagado' ? 'Pagado' : window.CRMCore.paymentState(a) === 'parcial' ? 'Abono parcial' : 'Pendiente')} — ${formatApptCostLabel(a)}</span>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded-xl border ${payBadge}">${(window.isCenterMedicalAppointment?.(a) || window.CRMCore.isCenterMedical(a)) ? (window.CRMCore.paymentState(a) === 'pagado' ? 'Centro médico · Pagado' : 'Centro médico · S/60 al completar') : (window.CRMCore.paymentState(a) === 'pagado' ? 'Pagado' : window.CRMCore.paymentState(a) === 'parcial' ? 'Abono parcial' : 'Pendiente')} — ${formatApptCostLabel(a)}</span>
                         </div>
                         ${a.notes ? `<p class="text-xs text-graphite-500 italic">"${a.notes}"</p>` : ''}
                     </div>`;
@@ -4012,10 +4009,15 @@ window.printClinicalHistory = async function() {
 
             if (typeof XLSX === 'undefined') {
                 const simpleRows = [['PACIENTE','FECHA','HORA','MODALIDAD','PRECIO','COBRADO','ESTADO','OBSERVACION','MONEDA']];
-                weeklyAppointments.forEach(a => simpleRows.push([
-                    a.patientName || 'Paciente',a.date||'',String(a.time||'').slice(0,5),a.modality||'',
-                    Number(a.cost||0),window.CRMCore.paid(a),a.status||'pendiente',window.CRMCore.isCenterMedical(a)?(window.CRMCore.paymentState(a)==='pagado'?'CENTRO MÉDICO · PAGADO':'CENTRO MÉDICO · S/60 AL COMPLETAR'):(a.notes||''),a.currency==='USD'?'USD':'PEN'
-                ]));
+                weeklyAppointments.forEach(a => {
+                    const isCenter = window.isCenterMedicalAppointment?.(a) || window.CRMCore.isCenterMedical(a);
+                    const financialAppointment = isCenter ? {...a,careOrigin:'centro_medico',collectionMode:'centro_medico',cost:60,currency:'PEN'} : a;
+                    simpleRows.push([
+                        a.patientName || 'Paciente',a.date||'',String(a.time||'').slice(0,5),a.modality||'',
+                        window.CRMCore.cost(financialAppointment),window.CRMCore.paid(financialAppointment),a.status||'pendiente',
+                        isCenter?(window.CRMCore.paymentState(financialAppointment)==='pagado'?'CENTRO MÉDICO · PAGADO':'CENTRO MÉDICO · S/60 AL COMPLETAR'):(a.notes||''),window.CRMCore.currency(financialAppointment)
+                    ]);
+                });
                 agendaDownloadCsv(simpleRows,`Horario_Semanal_${startStr}.csv`);
                 alert('Se descargó el horario en CSV compatible con Excel. Para descargar .xlsx, verifica la conexión que permite cargar el generador de Excel.');
                 return;
@@ -4038,9 +4040,11 @@ window.printClinicalHistory = async function() {
             const totals = {PEN:{cost:0,paid:0,count:0},USD:{cost:0,paid:0,count:0}};
 
             weeklyAppointments.forEach((a, index) => {
-                const cost = Number(a.cost || 0);
-                const paidAmount = window.CRMCore.paid(a);
-                const currency = a.currency === 'USD' ? 'USD' : 'PEN';
+                const isCenter = window.isCenterMedicalAppointment?.(a) || window.CRMCore.isCenterMedical(a);
+                const financialAppointment = isCenter ? {...a,careOrigin:'centro_medico',collectionMode:'centro_medico',cost:60,currency:'PEN'} : a;
+                const cost = window.CRMCore.cost(financialAppointment);
+                const paidAmount = window.CRMCore.paid(financialAppointment);
+                const currency = window.CRMCore.currency(financialAppointment);
                 const symbol = currency === 'USD' ? '$' : 'S/';
 
                 totals[currency].cost += cost;
@@ -4054,8 +4058,8 @@ window.printClinicalHistory = async function() {
                     reprogramada: 'REPROGRAMADO'
                 }[a.status] || String(a.status || '').toUpperCase();
 
-                let observation = window.CRMCore.isCenterMedical(a)
-                    ? (window.CRMCore.paymentState(a) === 'pagado' ? 'CENTRO MÉDICO · PAGADO AL CULMINAR' : 'CENTRO MÉDICO · S/60 AL COMPLETAR')
+                let observation = isCenter
+                    ? (window.CRMCore.paymentState(financialAppointment) === 'pagado' ? 'CENTRO MÉDICO · PAGADO AL CULMINAR' : 'CENTRO MÉDICO · S/60 AL COMPLETAR')
                     : (statusLabel || 'PENDIENTE');
                 if (a.notes && String(a.notes).trim()) {
                     observation = `${observation} — ${String(a.notes).trim()}`;

@@ -17,6 +17,11 @@ const center={patientId:'p6',status:'completada',cost:60,currency:'PEN',careOrig
 assert.equal(C.isCenterMedical(center),true);assert.equal(C.paid(center),60);assert.equal(C.remaining(center),0);assert.equal(C.paymentState(center),'pagado');
 const withCenter=C.metrics([...records,center]);assert.equal(withCenter.PEN.facturado,m.PEN.facturado+60);assert.equal(withCenter.PEN.cobrado,m.PEN.cobrado+60);assert.equal(withCenter.centroMedico.ingresos,60);assert.equal(withCenter.citasPagadas,m.citasPagadas+1);assert.ok(withCenter.tasaCobranza>m.tasaCobranza);
 const scheduledCenter={...center,status:'pendiente'};assert.equal(C.paid(scheduledCenter),0);assert.equal(C.remaining(scheduledCenter),0);assert.equal(C.paymentState(scheduledCenter),'no_aplica');
+const legacyCenter=C.withPatientCareOrigin({id:'old-center',patientId:'pc',status:'Completada',cost:45},{id:'pc',careOrigin:'centro_medico'});
+assert.equal(C.isCenterMedical(legacyCenter),true);assert.equal(C.cost(legacyCenter),60);assert.equal(C.currency(legacyCenter),'PEN');assert.equal(C.paid(legacyCenter),60);
+const legacyMetrics=C.metrics([legacyCenter]);assert.equal(legacyMetrics.PEN.cobrado,60);assert.equal(legacyMetrics.centroMedico.ingresos,60);
+assert.equal(C.completed({status:'COMPLETADA'}),true);assert.equal(C.cancelled({status:'No asistió'}),true);
+const explicitPrivate=C.withPatientCareOrigin({patientId:'pc',careOrigin:'particular',cost:50},{id:'pc',careOrigin:'centro_medico'});assert.equal(C.isCenterMedical(explicitPrivate),false);
 const withScheduled=C.metrics([...records,scheduledCenter]);assert.equal(withScheduled.PEN.facturado,m.PEN.facturado);assert.equal(withScheduled.PEN.cobrado,m.PEN.cobrado);assert.equal(withScheduled.centroMedico.ingresos,0);
 const cancelledCenter={...center,status:'no_asistio'};assert.equal(C.paid(cancelledCenter),0);assert.equal(C.remaining(cancelledCenter),0);
 assert.equal(C.safeURL('javascript:alert(1)'),'');assert.equal(C.safeURL('data:text/html,bad'),'');assert.ok(C.safeURL('https://example.com/documento').startsWith('https://'));

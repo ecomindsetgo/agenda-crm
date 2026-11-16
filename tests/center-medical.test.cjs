@@ -19,8 +19,13 @@ test('El centro médico paga S/60 automáticamente al completar la cita y no cre
  const app=read('js/app.js'),platform=read('js/crm-platform.js'),core=read('js/crm-core.js'),ui=read('js/ui.js');
  assert.match(app,/paymentStatus:\s*isCenterOrigin \? \(newStatus === 'completada' \? 'pagado' : 'no_aplica'\)/);
  assert.match(app,/changes\.paymentStatus = newStatus === 'completada' \? 'pagado' : 'no_aplica'/);
- assert.match(app,/changes\.paidAmount = newStatus === 'completada' \? window\.CRMCore\.cost\(original\) : 0/);
- assert.match(core,/if\(isCenterMedical\(a\)\)return a\.status==='completada'\?cost\(a\):0/);
+ assert.match(app,/changes\.paidAmount = newStatus === 'completada' \? 60 : 0/);
+ assert.match(app,/window\.registerCenterMedicalPayment = async function/);
+ assert.match(app,/quickTogglePayment = async function/);
+ assert.match(app,/if \(isCenterMedicalAppointment\(a\)\) return window\.registerCenterMedicalPayment\(aid\)/);
+ assert.match(app,/Registrar S\/60/);
+ assert.match(core,/if\(isCenterMedical\(a\)\)return completed\(a\)&&!cancelled\(a\)\?cost\(a\):0/);
+ assert.match(core,/withPatientCareOrigin/);
  assert.match(core,/const remaining=a=>isCenterMedical\(a\)\|\|cancelled\(a\)\?0/);
  assert.match(platform,/Ingresos recibidos/);
  assert.doesNotMatch(platform,/Liquidaciones del centro médico|data-center-settle/);

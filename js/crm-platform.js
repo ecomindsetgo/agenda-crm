@@ -3,7 +3,7 @@
  const C=window.CRMCore,q=id=>document.getElementById(id);
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const state=()=>window._profileState||{appointments:[],patients:[],histories:[],notes:[]};
- const apps=()=>state().appointments.filter(C.validAppointment);
+ const apps=()=>{const s=state();return s.appointments.filter(C.validAppointment).map(a=>C.withPatientCareOrigin(a,s.patients.find(p=>String(p.id)===String(a.patientId))));};
  const routes=[['inicio','Inicio','home','Operación diaria'],['citas','Agenda de citas','calendar'],['recepcion','Recepción','reception'],['pacientes','Pacientes / CRM','users','Gestión clínica'],['clinica','Historias clínicas','clinical'],['sesiones','Sesiones y evolución','calendar'],['evaluaciones','Evaluaciones','check'],['documentos','Documentos','file'],['finanzas','Finanzas','wallet','Administración'],['caja','Caja diaria','money'],['reportes','Centro de reportes','report'],['alertas','Alertas y seguimiento','bell'],['sistema','Configuración','spark'],['herramientas','Más opciones','file'],['asistente','Asistente','spark']];
  let current='inicio',installPrompt=null;
  const icon=name=>`<svg class="v2-icon" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
