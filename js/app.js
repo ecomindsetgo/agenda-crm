@@ -517,8 +517,15 @@ notify();
         // ─── CRUD PACIENTES ───────────────────────────────────────────────────────
         document.getElementById('patient-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!state.currentUser) return;
-            const pid = document.getElementById('patient-id').value || 'pat_' + Date.now();
+            const form = e.currentTarget;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            // Antes este caso salía en silencio y parecía que "no guardaba".
+            if (!state.currentUser) {
+                alert('Tu sesión no está activa. Recarga la página e inicia sesión de nuevo.');
+                return;
+            }
+            const existingId = document.getElementById('patient-id').value;
+            const pid = existingId || 'pat_' + Date.now();
             const payload = {
                 name:       document.getElementById('pat-name').value.trim(),
                 dni:        document.getElementById('pat-dni').value.trim(),
@@ -533,9 +540,32 @@ notify();
                 currency:   document.getElementById('pat-currency') ? document.getElementById('pat-currency').value : 'PEN',
                 updatedAt: new Date().toISOString()
             };
-            const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
-            await setDoc(ref, payload, { merge: true });
-            closePatientModal();
+            if (!existingId) payload.createdAt = payload.updatedAt;
+            if (!payload.name) { alert('Escribe el nombre del paciente.'); return; }
+
+            const originalLabel = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Guardando…'; }
+            try {
+                const ref = doc(db, 'artifacts', appId, 'users', state.currentUser.uid, 'patients', pid);
+                // setDoc solo se resuelve cuando el servidor confirma; sin conexión o con la
+                // escritura rechazada se quedaba colgado y el modal nunca se cerraba.
+                await Promise.race([
+                    setDoc(ref, payload, { merge: true }),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), 15000))
+                ]);
+                closePatientModal();
+            } catch (error) {
+                console.error('[Guardar paciente]', error);
+                if (error && error.message === 'TIMEOUT') {
+                    alert('No se recibió confirmación de Firebase en 15 segundos. Revisa tu conexión a internet e inténtalo de nuevo.');
+                } else if (error && error.code === 'permission-denied') {
+                    alert('Firebase rechazó el guardado (permission-denied). Revisa que las reglas de Firestore estén publicadas y que App Check/reCAPTCHA permita este dominio.');
+                } else {
+                    alert('No se pudo guardar el paciente: ' + ((error && (error.code || error.message)) || 'error desconocido'));
+                }
+            } finally {
+                if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalLabel; }
+            }
         });
 
         window.deletePatient = async function(pid) {
